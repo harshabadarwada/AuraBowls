@@ -111,6 +111,18 @@ export function outsideAreaText(input: { name: string; address: string; pin: str
   ].join("\n");
 }
 
+function dayLabel(iso: string) {
+  const [year, month, dayNumber] = iso.split("-").map(Number);
+  if (!year || !month || !dayNumber) return iso;
+  return new Date(Date.UTC(year, month - 1, dayNumber)).toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
+}
+
+export function subscriptionTotal(perDayPaise: number, days: number, discountBps: number) {
+  const reference = perDayPaise * days;
+  const discount = Math.min(reference, Math.round((reference * discountBps) / 10_000));
+  return { perDayPaise, referencePaise: reference, discountPaise: discount, totalPaise: reference - discount };
+}
+
 export function guideOrderText(input: {
   name: string;
   address: string;
@@ -118,19 +130,40 @@ export function guideOrderText(input: {
   goalLabel: string;
   lines: { name: string; quantity: number; pricePaise: number }[];
   body?: string[];
+  subscription?: {
+    days: number;
+    lengthLabel: string;
+    mealsLabel: string;
+    startDate: string;
+    slots: string[];
+    discountBps: number;
+  };
 }) {
-  const total = input.lines.reduce((sum, line) => sum + line.pricePaise * line.quantity, 0);
+  const perDay = input.lines.reduce((sum, line) => sum + line.pricePaise * line.quantity, 0);
+  const priced = input.subscription ? subscriptionTotal(perDay, input.subscription.days, input.subscription.discountBps) : null;
+  const plan = input.subscription ? [
+    `Subscription: ${input.subscription.lengthLabel}`,
+    `Meals: ${input.subscription.mealsLabel}`,
+    `First day: ${dayLabel(input.subscription.startDate)}`,
+    ...input.subscription.slots.map((slot) => `Delivery: ${slot}`),
+    input.subscription.discountBps > 0 ? `Discount: ${input.subscription.discountBps / 100}% off the menu price` : "Discount: none",
+  ] : [];
   return [
     ...identity(input),
     `Goal: ${input.goalLabel}`,
     "",
     ...(input.body || []),
     ...(input.body?.length ? [""] : []),
-    input.lines.length ? "Bowls:" : "Bowls: none added yet",
+    ...plan,
+    ...(plan.length ? [""] : []),
+    input.lines.length ? "Bowls each day:" : "Bowls: none added yet",
     ...input.lines.map((line) => `${line.quantity} × ${line.name} — ${formatInr(line.pricePaise * line.quantity)}`),
     "",
-    input.lines.length ? `Menu total: ${formatInr(total)}` : "",
-    "Please send the payment QR on this chat. I will pay from this number.",
+    priced ? `Per day: ${formatInr(priced.perDayPaise)}` : undefined,
+    priced && input.subscription ? `${input.subscription.days} days: ${formatInr(priced.referencePaise)}` : undefined,
+    priced && priced.discountPaise > 0 ? `Plan discount: -${formatInr(priced.discountPaise)}` : undefined,
+    priced ? `Total: ${formatInr(priced.totalPaise)}` : input.lines.length ? `Menu total: ${formatInr(perDay)}` : undefined,
+    "Please send the payment QR on this chat. I have not paid yet.",
   ].filter((line) => line !== undefined).join("\n");
 }
 

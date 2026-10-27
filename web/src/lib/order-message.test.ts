@@ -13,7 +13,7 @@ describe("WhatsApp identity", () => {
     expect(text).toContain("Name: Meera Rao");
     expect(text).toContain("Address: Flat 12, Madhapur");
     expect(text).toContain("PIN: 500081");
-    expect(text.indexOf("Name:")).toBeLessThan(text.indexOf("Bowls:"));
+    expect(text.indexOf("Name:")).toBeLessThan(text.indexOf("Bowls each day:"));
   });
 
   it("sends an outside-area note with the same identity", () => {
@@ -39,5 +39,30 @@ describe("WhatsApp identity", () => {
     expect(text).toContain("Address: Flat 12, Madhapur");
     expect(text).toContain("Plan: Weekday Breakfast");
     expect(text).toContain("I have not paid yet");
+  });
+
+  it("includes the subscription length, meals, slot, and total", () => {
+    const text = guideOrderText({
+      name: "Meera Rao",
+      address: "Flat 12, Madhapur",
+      pin: "500081",
+      goalLabel: "Fat loss",
+      lines: [{ name: "Mango Coconut Overnight Oats", quantity: 1, pricePaise: 22000 }],
+      subscription: {
+        days: 5,
+        lengthLabel: "5 weekdays",
+        mealsLabel: "Breakfast",
+        startDate: "2026-11-02",
+        slots: ["Breakfast 7:30–9:00"],
+        discountBps: 500,
+      },
+    });
+    expect(text).toContain("Name: Meera Rao");
+    expect(text).toContain("Address: Flat 12, Madhapur");
+    expect(text).toContain("Subscription: 5 weekdays");
+    expect(text).toContain("Meals: Breakfast");
+    expect(text).toContain("Delivery: Breakfast 7:30–9:00");
+    expect(text).toContain("Total: ₹1,045.00");
+    expect(text.indexOf("Name:")).toBeLessThan(text.indexOf("Subscription:"));
   });
 });
