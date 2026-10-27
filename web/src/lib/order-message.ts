@@ -88,7 +88,34 @@ export function orderSummaryText(input: {
 }
 
 export function businessWhatsapp(stored = "") {
-  return (process.env.ORDER_WHATSAPP || process.env.NEXT_PUBLIC_ORDER_WHATSAPP || stored || "").replace(/[^\d]/g, "");
+  const digits = (process.env.ORDER_WHATSAPP || process.env.NEXT_PUBLIC_ORDER_WHATSAPP || stored || "9652148800").replace(/\D/g, "");
+  if (digits.length === 10) return `91${digits}`;
+  return digits;
+}
+
+export function guideOrderText(input: {
+  name: string;
+  goalLabel: string;
+  lines: { name: string; quantity: number; pricePaise: number }[];
+  body?: string[];
+}) {
+  const total = input.lines.reduce((sum, line) => sum + line.pricePaise * line.quantity, 0);
+  return [
+    "Hello AuraBowls,",
+    `My name is ${input.name}.`,
+    `Goal: ${input.goalLabel}`,
+    "",
+    ...(input.body || []),
+    ...(input.body?.length ? [""] : []),
+    input.lines.length ? "Bowls:" : "Bowls: none added yet",
+    ...input.lines.map((line) => `${line.quantity} × ${line.name} — ${formatInr(line.pricePaise * line.quantity)}`),
+    "",
+    input.lines.length ? `Menu total: ${formatInr(total)}` : "",
+    "Please send the payment QR on this chat. I will pay from this number.",
+    "",
+    "PIN:",
+    "Note:",
+  ].filter((line) => line !== undefined).join("\n");
 }
 
 export function menuOrderText(lines: { name: string; quantity: number; pricePaise: number }[]) {

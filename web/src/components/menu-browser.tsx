@@ -2,8 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { BowlTile } from "@/components/bowl-tile";
 import { addMenuLine, readMenu, writeMenu, type MenuLine } from "@/components/draft";
-import { formatInr, dietLabel } from "@/lib/format";
+import { formatInr } from "@/lib/format";
 import { menuOrderText, whatsappHref } from "@/lib/order-message";
 import type { PublicMeal } from "@/server/catalog";
 
@@ -103,37 +104,20 @@ export function MenuBrowser({ meals, whatsapp = "", initialType = "all", initial
           return (
             <section key={slug} className="mt-8">
               <h2 className="text-2xl text-[#1A4A16]">{title}</h2>
-              <ul className="mt-3 overflow-hidden rounded-[20px] border border-[#EAE4DD] bg-white">
+              <div className="mt-4 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3">
                 {items.map((meal) => {
                   const line = basket.find((item) => item.slug === meal.slug);
                   return (
-                    <li key={meal.slug} className="flex items-center gap-3 border-b border-[#EAE4DD] p-3 last:border-b-0">
-                      <Link href={`/meals/${meal.slug}`} className="plate h-14 w-14 shrink-0 overflow-hidden rounded-full bg-[#EAF6DC]">
-                        {meal.imageUrl ? <img src={meal.imageUrl} alt="" /> : null}
-                      </Link>
-                      <div className="min-w-0 flex-1">
-                        <Link href={`/meals/${meal.slug}`} className="block truncate font-semibold text-[#1A4A16]">{meal.name}</Link>
-                        <p className="truncate text-xs text-[#6A5A4E]">{meal.portionLabel} · {meal.dietTags.map(dietLabel).join(", ") || meal.mealType}</p>
-                      </div>
-                      <div className="shrink-0 text-right">
-                        <p className="text-sm font-semibold text-[#F15C00]">
-                          {meal.compareAtPaise > meal.pricePaise ? <span className="mr-1 font-medium text-[#6A5A4E] line-through">{formatInr(meal.compareAtPaise)}</span> : null}
-                          {formatInr(meal.pricePaise)}
-                        </p>
-                        {line ? (
-                          <span className="mt-1 inline-flex items-center gap-2">
-                            <button type="button" className="grid h-8 w-8 place-items-center rounded-full bg-[#EAF6DC]" aria-label={`Fewer ${meal.name}`} onClick={() => refresh(basket.map((item) => item.slug === meal.slug ? { ...item, quantity: item.quantity - 1 } : item).filter((item) => item.quantity > 0))}>−</button>
-                            <span className="w-4 text-center text-sm font-semibold">{line.quantity}</span>
-                            <button type="button" className="grid h-8 w-8 place-items-center rounded-full bg-[#F15C00] text-white" aria-label={`More ${meal.name}`} onClick={() => add(meal)}>+</button>
-                          </span>
-                        ) : (
-                          <button type="button" className="mt-1 text-sm font-semibold text-[#1A4A16]" onClick={() => add(meal)}>Add</button>
-                        )}
-                      </div>
-                    </li>
+                    <BowlTile
+                      key={meal.slug}
+                      meal={meal}
+                      quantity={line?.quantity || 0}
+                      onAdd={() => add(meal)}
+                      onLess={() => refresh(basket.map((item) => item.slug === meal.slug ? { ...item, quantity: item.quantity - 1 } : item).filter((item) => item.quantity > 0))}
+                    />
                   );
                 })}
-              </ul>
+              </div>
             </section>
           );
         })
