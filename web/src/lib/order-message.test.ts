@@ -63,6 +63,8 @@ describe("WhatsApp identity", () => {
     expect(text).toContain("Meals: Breakfast");
     expect(text).toContain("Delivery: Breakfast 7:30–9:00");
     expect(text).toContain("Total: ₹1,045.00");
+    expect(text).toContain("Delivery charges vary by location");
+    expect(text).toContain("PIN: 500081");
     expect(text.indexOf("Name:")).toBeLessThan(text.indexOf("Subscription:"));
   });
 });

@@ -314,7 +314,7 @@ export function PlanBuilder({ plan, meals, slots, options, whatsapp }: { plan: P
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#6A5A4E]">Payable</p>
           <p className="display text-4xl text-[#1A4A16]">{quote ? formatInr(quote.totalPaise) : mealsFrom === null ? "Price pending" : formatInr(mealsFrom)}</p>
-          <p className="text-sm text-[#6A5A4E]">{quote ? sitting : "The kitchen confirms the payable total after the days are laid out."}</p>
+          <p className="text-sm text-[#6A5A4E]">{quote ? sitting : "The kitchen confirms the payable total after the days are laid out."} Delivery charges vary by location.</p>
           {priceError ? <p className="mt-2 text-sm text-[#7a3410]" role="alert">{priceError}</p> : null}
           {quote ? (
             <dl className="mt-3 grid max-w-sm grid-cols-2 gap-x-6 gap-y-1 text-sm text-[#6A5A4E]">

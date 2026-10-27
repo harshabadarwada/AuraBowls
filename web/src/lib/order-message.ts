@@ -93,6 +93,8 @@ export function businessWhatsapp(stored = "") {
   return digits;
 }
 
+export const deliveryChargeNote = "Delivery charges vary by location and are not included in this total. The kitchen will confirm the charge.";
+
 function identity(input: { name: string; address: string; pin: string }) {
   return [
     "Hello AuraBowls,",
@@ -163,6 +165,7 @@ export function guideOrderText(input: {
     priced && input.subscription ? `${input.subscription.days} days: ${formatInr(priced.referencePaise)}` : undefined,
     priced && priced.discountPaise > 0 ? `Plan discount: -${formatInr(priced.discountPaise)}` : undefined,
     priced ? `Total: ${formatInr(priced.totalPaise)}` : input.lines.length ? `Menu total: ${formatInr(perDay)}` : undefined,
+    deliveryChargeNote,
     "Please send the payment QR on this chat. I have not paid yet.",
   ].filter((line) => line !== undefined).join("\n");
 }
@@ -178,6 +181,7 @@ export function menuOrderText(input: { name: string; address: string; pin: strin
     ...input.lines.map((line) => `${line.quantity} × ${line.name} — ${formatInr(line.pricePaise * line.quantity)}`),
     "",
     `Menu total: ${formatInr(total)}`,
+    deliveryChargeNote,
     "I will pay after you send the QR.",
   ].join("\n");
 }
@@ -204,6 +208,7 @@ export function planOrderText(input: {
     ...input.lines.map((line) => `${day(line.date)}: ${line.mealName} (${line.slotLabel})`),
     "",
     `Total: ${formatInr(input.totalPaise)}`,
+    deliveryChargeNote,
   ].join("\n");
 }
 

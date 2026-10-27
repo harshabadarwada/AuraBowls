@@ -71,7 +71,7 @@ export function MenuCart({ whatsapp }: { whatsapp: string }) {
         <div className="mt-5">
           <p className="text-sm text-[#6A5A4E]">Menu total</p>
           <p className="display text-4xl text-[#1A4A16]">{formatInr(total)}</p>
-          <p className="mt-1 text-xs text-[#6A5A4E]">Delivery is confirmed in the chat. This total is the menu price of the items above.</p>
+          <p className="mt-1 text-xs text-[#6A5A4E]">Delivery charges vary by location and are not included in this total. The kitchen confirms the charge.</p>
           {href ? (
             <a className="btn btn-accent mt-4 w-full" href={href} target="_blank" rel="noreferrer">{outside ? "Send my location on WhatsApp" : "Send on WhatsApp"}</a>
           ) : (

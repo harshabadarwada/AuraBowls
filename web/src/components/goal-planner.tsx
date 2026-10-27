@@ -62,6 +62,8 @@ export function GoalPlanner({ meals, whatsapp }: { meals: PublicMeal[]; whatsapp
   const [pin, setPin] = useState("");
   const [inArea, setInArea] = useState<boolean | null>(null);
   const [error, setError] = useState("");
+  const [askSend, setAskSend] = useState(false);
+  const [confirmPin, setConfirmPin] = useState("");
   const [basket, setBasket] = useState<MenuLine[]>([]);
   useEffect(() => {
     setBasket(readMenu());
@@ -109,14 +111,18 @@ export function GoalPlanner({ meals, whatsapp }: { meals: PublicMeal[]; whatsapp
   const person = { name: name.trim(), address: address.trim(), pin: pin.trim() };
   const identified = person.name.length >= 2 && person.address.length >= 4;
   const outsideHref = identified ? whatsappHref(whatsapp, outsideAreaText(person)) : "";
-  const href = identified && bowlsReady ? whatsappHref(whatsapp, guideOrderText({
-    ...person,
-    pin: SERVED_PIN,
+  const confirmPerson = { name: name.trim(), address: address.trim(), pin: confirmPin.trim() };
+  const pinReady = /^\d{6}$/.test(confirmPerson.pin);
+  const sendReady = confirmPerson.name.length >= 2 && confirmPerson.address.length >= 4 && pinReady;
+  const sendOutside = pinReady && confirmPerson.pin !== SERVED_PIN;
+  const orderText = guideOrderText({
+    ...confirmPerson,
     goalLabel,
     body: bodyLines,
     lines: lines.map((line) => ({ name: line.name, quantity: line.quantity, pricePaise: line.pricePaise })),
     subscription: { days: length.days, lengthLabel: length.label, mealsLabel, startDate, slots, discountBps: length.discountBps },
-  })) : "";
+  });
+  const href = sendReady && bowlsReady ? whatsappHref(whatsapp, sendOutside ? outsideAreaText(confirmPerson) : orderText) : "";
 
   function savePlace(nextInArea: boolean) {
     if (!identified) return setError("Enter your name and address so we know who to reply to.");
@@ -292,6 +298,7 @@ export function GoalPlanner({ meals, whatsapp }: { meals: PublicMeal[]; whatsapp
             </div>
           ) : null}
           <p className="mt-5 text-sm leading-6 text-[#6A5A4E]">{length.label} · {mealsLabel} · starts {startDate} · {slots.join(" · ")}</p>
+          <p className="mt-2 text-sm leading-6 text-[#6A5A4E]">Delivery charges vary by location and are not included in the bowl total.</p>
           <button className="btn btn-accent mt-4" type="button" disabled={!/^\d{4}-\d{2}-\d{2}$/.test(startDate)} onClick={() => setStep("bowls")}>Choose bowls</button>
         </section>
       ) : null}
@@ -307,13 +314,36 @@ export function GoalPlanner({ meals, whatsapp }: { meals: PublicMeal[]; whatsapp
               return <BowlTile key={meal.slug} meal={meal} quantity={line?.quantity || 0} onAdd={() => add(meal)} onLess={() => less(meal.slug)} />;
             })}
           </div>
-          <div className="fixed inset-x-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-30 flex items-center justify-between gap-3 rounded-full bg-[#1A4A16] px-4 py-2 text-white md:bottom-6">
-            <div>
-              <p className="text-[11px] uppercase tracking-wide text-white/70">{length.label} · {formatInr(priced.totalPaise)}</p>
-              <p className="text-sm">{bowlsReady ? name.trim() : mealsChoice === "both" ? "Add one breakfast and one lunch" : "Add a bowl"}</p>
+          {askSend ? (
+            <div className="fixed inset-x-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-30 rounded-[28px] bg-white p-4 text-[#1A4A16] shadow-[0_16px_40px_rgba(26,74,22,0.18)] md:bottom-6">
+              <p className="text-sm font-semibold">Check this before WhatsApp opens</p>
+              <label className="mt-3 block text-sm font-semibold">Name
+                <input className="field mt-1" value={name} onChange={(event) => setName(event.target.value)} />
+              </label>
+              <label className="mt-3 block text-sm font-semibold">Address
+                <input className="field mt-1" value={address} onChange={(event) => setAddress(event.target.value)} placeholder="Flat, street, area" />
+              </label>
+              <label className="mt-3 block text-sm font-semibold">PIN code
+                <input className="field mt-1" inputMode="numeric" maxLength={6} value={confirmPin} onChange={(event) => setConfirmPin(event.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="500081" />
+              </label>
+              <p className="mt-3 text-sm leading-6 text-[#6A5A4E]">Delivery charges vary by location and are not included in {formatInr(priced.totalPaise)}. The kitchen confirms the charge on WhatsApp.</p>
+              {sendOutside ? <p className="mt-2 text-sm text-[#7a3410]">PIN {confirmPerson.pin} is outside 500081. This sends your name and address so we can reply.</p> : null}
+              {href ? (
+                <a className="btn btn-accent mt-4 w-full" href={href} target="_blank" rel="noreferrer" onClick={() => writePerson(confirmPerson)}>Send on WhatsApp</a>
+              ) : (
+                <p className="mt-3 text-sm text-[#6A5A4E]">Enter your name, address, and a 6-digit PIN. WhatsApp stays closed until those are filled in.</p>
+              )}
+              <button type="button" className="mt-3 text-sm font-semibold text-[#1A4A16]" onClick={() => setAskSend(false)}>Back to bowls</button>
             </div>
-            {href ? <a className="btn btn-accent" href={href} target="_blank" rel="noreferrer">Send on WhatsApp</a> : <span className="text-sm">Add the bowls</span>}
-          </div>
+          ) : (
+            <div className="fixed inset-x-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-30 flex items-center justify-between gap-3 rounded-full bg-[#1A4A16] px-4 py-2 text-white md:bottom-6">
+              <div>
+                <p className="text-[11px] uppercase tracking-wide text-white/70">{length.label} · {formatInr(priced.totalPaise)} · delivery extra</p>
+                <p className="text-sm">{bowlsReady ? "PIN is checked next" : mealsChoice === "both" ? "Add one breakfast and one lunch" : "Add a bowl"}</p>
+              </div>
+              <button type="button" className="btn btn-accent" disabled={!bowlsReady} onClick={() => setAskSend(true)}>Send on WhatsApp</button>
+            </div>
+          )}
         </section>
       ) : null}
     </div>
