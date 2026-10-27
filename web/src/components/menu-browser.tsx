@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { BowlTile } from "@/components/bowl-tile";
-import { addMenuLine, readMenu, writeMenu, type MenuLine } from "@/components/draft";
+import { addMenuLine, readMenu, readPerson, writeMenu, type MenuLine } from "@/components/draft";
 import { formatInr } from "@/lib/format";
 import { menuOrderText, whatsappHref } from "@/lib/order-message";
 import type { PublicMeal } from "@/server/catalog";
@@ -128,17 +128,20 @@ export function MenuBrowser({ meals, whatsapp = "", initialType = "all", initial
 }
 
 function BasketBar({ lines, whatsapp }: { lines: MenuLine[]; whatsapp: string }) {
+  const [person, setPerson] = useState({ name: "", address: "", pin: "" });
+  useEffect(() => { setPerson(readPerson()); }, [lines]);
   const count = lines.reduce((sum, line) => sum + line.quantity, 0);
   const total = lines.reduce((sum, line) => sum + line.pricePaise * line.quantity, 0);
   if (count === 0) return null;
-  const href = whatsappHref(whatsapp, menuOrderText(lines));
+  const ready = person.name.trim().length >= 2 && person.address.trim().length >= 4 && person.pin.trim().length >= 6;
+  const href = ready ? whatsappHref(whatsapp, menuOrderText({ ...person, lines })) : "";
   return (
     <div className="fixed inset-x-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-30 flex items-center justify-between gap-3 rounded-full bg-[#1A4A16] px-4 py-2 text-white shadow-[0_12px_30px_rgba(26,74,22,0.2)] md:bottom-6">
       <div>
         <p className="text-[11px] uppercase tracking-wide text-white/70">{count} {count === 1 ? "item" : "items"}</p>
         <p className="text-lg font-semibold">{formatInr(total)}</p>
       </div>
-      {href ? <a className="btn btn-accent" href={href} target="_blank" rel="noreferrer">Send on WhatsApp</a> : <Link className="btn btn-accent" href="/cart">Review order</Link>}
+      {href ? <a className="btn btn-accent" href={href} target="_blank" rel="noreferrer">Send on WhatsApp</a> : <Link className="btn btn-accent" href="/cart">Add name and address</Link>}
     </div>
   );
 }

@@ -93,16 +93,35 @@ export function businessWhatsapp(stored = "") {
   return digits;
 }
 
+function identity(input: { name: string; address: string; pin: string }) {
+  return [
+    "Hello AuraBowls,",
+    `Name: ${input.name.trim()}`,
+    `Address: ${input.address.trim()}`,
+    input.pin.trim() ? `PIN: ${input.pin.trim()}` : "",
+  ].filter(Boolean);
+}
+
+export function outsideAreaText(input: { name: string; address: string; pin: string }) {
+  return [
+    ...identity(input),
+    "",
+    "I am interested in AuraBowls, but this address is outside PIN 500081.",
+    "Please reply if you can deliver here.",
+  ].join("\n");
+}
+
 export function guideOrderText(input: {
   name: string;
+  address: string;
+  pin: string;
   goalLabel: string;
   lines: { name: string; quantity: number; pricePaise: number }[];
   body?: string[];
 }) {
   const total = input.lines.reduce((sum, line) => sum + line.pricePaise * line.quantity, 0);
   return [
-    "Hello AuraBowls,",
-    `My name is ${input.name}.`,
+    ...identity(input),
     `Goal: ${input.goalLabel}`,
     "",
     ...(input.body || []),
@@ -112,26 +131,21 @@ export function guideOrderText(input: {
     "",
     input.lines.length ? `Menu total: ${formatInr(total)}` : "",
     "Please send the payment QR on this chat. I will pay from this number.",
-    "",
-    "PIN:",
-    "Note:",
   ].filter((line) => line !== undefined).join("\n");
 }
 
-export function menuOrderText(lines: { name: string; quantity: number; pricePaise: number }[]) {
-  const total = lines.reduce((sum, line) => sum + line.pricePaise * line.quantity, 0);
+export function menuOrderText(input: { name: string; address: string; pin: string; lines: { name: string; quantity: number; pricePaise: number }[] }) {
+  const total = input.lines.reduce((sum, line) => sum + line.pricePaise * line.quantity, 0);
+  if (input.pin.trim() !== "500081") return outsideAreaText(input);
   return [
-    "Hello AuraBowls,",
+    ...identity(input),
+    "",
     "I want to order these meals. Please send the payment QR on this chat.",
     "",
-    ...lines.map((line) => `${line.quantity} × ${line.name} — ${formatInr(line.pricePaise * line.quantity)}`),
+    ...input.lines.map((line) => `${line.quantity} × ${line.name} — ${formatInr(line.pricePaise * line.quantity)}`),
     "",
     `Menu total: ${formatInr(total)}`,
-    "I will pay after you send the QR. Please confirm delivery on this chat.",
-    "",
-    "Name:",
-    "PIN:",
-    "Note:",
+    "I will pay after you send the QR.",
   ].join("\n");
 }
 

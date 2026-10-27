@@ -65,6 +65,27 @@ export function writeMenu(lines: MenuLine[]) {
   window.dispatchEvent(new Event("aurabowls-menu"));
 }
 
+export type Person = { name: string; address: string; pin: string };
+
+const PERSON_KEY = "aurabowls.person.v1";
+export const SERVED_PIN = "500081";
+
+export function readPerson(): Person {
+  if (typeof window === "undefined") return { name: "", address: "", pin: "" };
+  try {
+    const raw = sessionStorage.getItem(PERSON_KEY);
+    const person = raw ? JSON.parse(raw) as Person : null;
+    return { name: person?.name || "", address: person?.address || "", pin: person?.pin || "" };
+  } catch {
+    return { name: "", address: "", pin: "" };
+  }
+}
+
+export function writePerson(person: Person) {
+  sessionStorage.setItem(PERSON_KEY, JSON.stringify(person));
+  window.dispatchEvent(new Event("aurabowls-person"));
+}
+
 export function addMenuLine(line: Omit<MenuLine, "quantity">, quantity = 1) {
   const lines = readMenu();
   const found = lines.find((item) => item.slug === line.slug);

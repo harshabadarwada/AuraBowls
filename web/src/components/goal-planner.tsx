@@ -2,11 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { addMenuLine, readMenu, writeMenu, type MenuLine } from "@/components/draft";
+import { addMenuLine, readMenu, readPerson, SERVED_PIN, writeMenu, writePerson, type MenuLine } from "@/components/draft";
 import { BowlTile } from "@/components/bowl-tile";
 import { formatInr } from "@/lib/format";
 import { bodyMassIndex, bodyMassLabel, suggestIntake, type Activity, type BodyGoal, type Sex } from "@/lib/guidance";
-import { guideOrderText, whatsappHref } from "@/lib/order-message";
+import { guideOrderText, outsideAreaText, whatsappHref } from "@/lib/order-message";
 import type { PublicMeal } from "@/server/catalog";
 
 const goals = [
@@ -24,7 +24,7 @@ const activities = [
 
 export function GoalPlanner({ meals, whatsapp }: { meals: PublicMeal[]; whatsapp: string }) {
   const [goal, setGoal] = useState<BodyGoal | "">("");
-  const [step, setStep] = useState<"goal" | "measure" | "name" | "bowls">("goal");
+  const [step, setStep] = useState<"place" | "goal" | "measure" | "name" | "bowls">("place");
   const [sex, setSex] = useState<Sex | "">("");
   const [activity, setActivity] = useState<Activity>("regular");
   const [height, setHeight] = useState("");
@@ -32,9 +32,18 @@ export function GoalPlanner({ meals, whatsapp }: { meals: PublicMeal[]; whatsapp
   const [age, setAge] = useState("");
   const [reportedBmi, setReportedBmi] = useState("");
   const [name, setName] = useState("");
+  const [address, setAddress] = useState("");
+  const [pin, setPin] = useState("");
+  const [inArea, setInArea] = useState<boolean | null>(null);
   const [error, setError] = useState("");
   const [basket, setBasket] = useState<MenuLine[]>([]);
-  useEffect(() => { setBasket(readMenu()); }, []);
+  useEffect(() => {
+    setBasket(readMenu());
+    const person = readPerson();
+    setName(person.name);
+    setAddress(person.address);
+    setPin(person.pin);
+  }, []);
 
   const numbers = {
     heightCm: Number(height),
@@ -60,12 +69,27 @@ export function GoalPlanner({ meals, whatsapp }: { meals: PublicMeal[]; whatsapp
     estimate.note,
     "This is an estimate, not a medical plan. Bowl nutrition is not recorded, so these bowls are not claimed to add up to the target.",
   ].filter(Boolean) : [];
-  const href = name.trim().length >= 2 ? whatsappHref(whatsapp, guideOrderText({
-    name: name.trim(),
+  const person = { name: name.trim(), address: address.trim(), pin: pin.trim() };
+  const identified = person.name.length >= 2 && person.address.length >= 4;
+  const outsideHref = identified ? whatsappHref(whatsapp, outsideAreaText(person)) : "";
+  const href = identified ? whatsappHref(whatsapp, guideOrderText({
+    ...person,
+    pin: SERVED_PIN,
     goalLabel,
     body: bodyLines,
     lines: lines.map((line) => ({ name: line.name, quantity: line.quantity, pricePaise: line.pricePaise })),
   })) : "";
+
+  function savePlace(nextInArea: boolean) {
+    if (!identified) return setError("Enter your name and address so we know who to reply to.");
+    if (!nextInArea && pin.trim().length < 6 && address.trim().length < 4) return setError("Tell us the area or PIN where you are.");
+    setError("");
+    const next = { name: person.name, address: person.address, pin: nextInArea ? SERVED_PIN : pin.trim() };
+    writePerson(next);
+    setPin(next.pin);
+    setInArea(nextInArea);
+    if (nextInArea) setStep("goal");
+  }
 
   function choose(next: BodyGoal) {
     setGoal(next);
@@ -100,6 +124,33 @@ export function GoalPlanner({ meals, whatsapp }: { meals: PublicMeal[]; whatsapp
 
   return (
     <div className="mx-auto max-w-5xl pb-28">
+      {step === "place" ? (
+        <section className="mx-auto max-w-xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#1A4A16]">Delivery</p>
+          <h1 className="display mt-3 text-4xl leading-[1.05] text-[#1A4A16] sm:text-5xl">We deliver in PIN 500081.</h1>
+          <p className="mt-3 text-sm leading-7 text-[#6A5A4E]">Madhapur and Hitech City. If you are there, continue. If you are somewhere else, send your name and address on WhatsApp and we will reply.</p>
+          <label className="mt-6 block text-sm font-semibold text-[#1A4A16]">Name
+            <input className="field mt-1" value={name} onChange={(event) => setName(event.target.value)} placeholder="Your name" />
+          </label>
+          <label className="mt-3 block text-sm font-semibold text-[#1A4A16]">Address
+            <input className="field mt-1" value={address} onChange={(event) => setAddress(event.target.value)} placeholder="Flat, street, area" />
+          </label>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button type="button" className={`chip ${inArea === true ? "chip-on" : ""}`} onClick={() => savePlace(true)}>I am in 500081</button>
+            <button type="button" className={`chip ${inArea === false ? "chip-on" : ""}`} onClick={() => { setInArea(false); setError(""); }}>I am somewhere else</button>
+          </div>
+          {inArea === false ? (
+            <label className="mt-4 block text-sm font-semibold text-[#1A4A16]">Your PIN or area
+              <input className="field mt-1" value={pin} onChange={(event) => setPin(event.target.value)} placeholder="PIN or neighbourhood" />
+            </label>
+          ) : null}
+          {error ? <p className="mt-3 text-sm text-[#7a3410]" role="alert">{error}</p> : null}
+          {inArea === false ? (
+            outsideHref ? <a className="btn btn-accent mt-5" href={outsideHref} target="_blank" rel="noreferrer" onClick={() => writePerson({ name: person.name, address: person.address, pin: pin.trim() })}>Send my location on WhatsApp</a> : <p className="mt-4 text-sm text-[#6A5A4E]">Add your name and address, then the WhatsApp draft can open.</p>
+          ) : null}
+        </section>
+      ) : null}
+
       {step === "goal" ? (
         <section>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#1A4A16]">Start here</p>
@@ -119,7 +170,7 @@ export function GoalPlanner({ meals, whatsapp }: { meals: PublicMeal[]; whatsapp
 
       {step === "measure" && (goal === "fat_loss" || goal === "weight_gain") ? (
         <section className="mx-auto max-w-xl">
-          <button type="button" className="text-sm font-semibold text-[#1A4A16]" onClick={() => setStep("goal")}>Back</button>
+          <button type="button" className="text-sm font-semibold text-[#1A4A16]" onClick={() => setStep("place")}>Back</button>
           <h1 className="display mt-3 text-4xl text-[#1A4A16]">Your measurements</h1>
           <p className="mt-3 text-sm leading-6 text-[#6A5A4E]">Height and weight are enough for BMI. Add age and activity for the calorie estimate. If a report already states BMI, you can type that too.</p>
           <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -147,7 +198,8 @@ export function GoalPlanner({ meals, whatsapp }: { meals: PublicMeal[]; whatsapp
       {step === "name" ? (
         <section className="mx-auto max-w-xl">
           <button type="button" className="text-sm font-semibold text-[#1A4A16]" onClick={() => setStep(goal === "eat_healthy" ? "goal" : "measure")}>Back</button>
-          <h1 className="display mt-3 text-4xl text-[#1A4A16]">What should we call you?</h1>
+          <h1 className="display mt-3 text-4xl text-[#1A4A16]">{name.trim() ? `${name.trim()}, here is the suggestion.` : "What should we call you?"}</h1>
+          <p className="mt-2 text-sm text-[#6A5A4E]">{address.trim()} · PIN {SERVED_PIN}</p>
           {estimate && estimate.ok ? (
             <div className="mt-5 rounded-[28px] bg-[#1A4A16] p-6 text-white">
               <p className="text-xs uppercase tracking-[0.14em] text-white/70">{goalLabel} · BMI {estimate.bmi}</p>
@@ -160,7 +212,7 @@ export function GoalPlanner({ meals, whatsapp }: { meals: PublicMeal[]; whatsapp
           <label className="mt-5 block text-sm font-semibold text-[#1A4A16]">Name
             <input className="field mt-1" value={name} onChange={(event) => setName(event.target.value)} placeholder="Your name" />
           </label>
-          <button className="btn btn-accent mt-4" type="button" disabled={name.trim().length < 2} onClick={() => setStep("bowls")}>Choose bowls</button>
+          <button className="btn btn-accent mt-4" type="button" disabled={name.trim().length < 2} onClick={() => { writePerson({ name: name.trim(), address: address.trim(), pin: SERVED_PIN }); setStep("bowls"); }}>Choose bowls</button>
         </section>
       ) : null}
 
