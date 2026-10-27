@@ -308,7 +308,7 @@ export function GoalPlanner({ meals, whatsapp }: { meals: PublicMeal[]; whatsapp
           <button type="button" className="text-sm font-semibold text-[#1A4A16]" onClick={() => setStep("subscription")}>Back</button>
           <h1 className="display mt-3 text-4xl text-[#1A4A16]">Add the bowls, {name.trim()}.</h1>
           <p className="mt-3 max-w-xl text-sm leading-6 text-[#6A5A4E]">{length.label} of {mealsLabel.toLowerCase()}. {slots.join(" · ")}. Your name, address{estimate?.ok ? ", measurements, and the calorie estimate" : ""} go in the same WhatsApp message.</p>
-          <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3">
+          <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
             {bowls.filter((meal) => mealsChoice === "both" ? meal.mealType === "breakfast" || meal.mealType === "lunch" : meal.mealType === mealsChoice).map((meal) => {
               const line = basket.find((item) => item.slug === meal.slug);
               return <BowlTile key={meal.slug} meal={meal} quantity={line?.quantity || 0} onAdd={() => add(meal)} onLess={() => less(meal.slug)} />;

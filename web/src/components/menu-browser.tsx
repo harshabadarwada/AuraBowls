@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { BowlTile } from "@/components/bowl-tile";
-import { addMenuLine, readMenu, writeMenu, type MenuLine } from "@/components/draft";
+import { addMenuLine, readMenu, readPerson, SERVED_PIN, writeMenu, writePerson, type MenuLine } from "@/components/draft";
 import { formatInr } from "@/lib/format";
+import { menuOrderText, outsideAreaText, whatsappHref } from "@/lib/order-message";
 import type { PublicMeal } from "@/server/catalog";
 
-export function MenuBrowser({ meals, initialType = "all", initialQuery = "" }: { meals: PublicMeal[]; initialType?: string; initialQuery?: string }) {
+export function MenuBrowser({ meals, whatsapp = "", initialType = "all", initialQuery = "" }: { meals: PublicMeal[]; whatsapp?: string; initialType?: string; initialQuery?: string }) {
   const [type, setType] = useState(initialType);
   const [category, setCategory] = useState("all");
   const [diet, setDiet] = useState("all");
@@ -103,7 +103,7 @@ export function MenuBrowser({ meals, initialType = "all", initialQuery = "" }: {
           return (
             <section key={slug} className="mt-8">
               <h2 className="text-2xl text-[#1A4A16]">{title}</h2>
-              <div className="mt-4 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3">
+              <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
                 {items.map((meal) => {
                   const line = basket.find((item) => item.slug === meal.slug);
                   return (
@@ -121,22 +121,60 @@ export function MenuBrowser({ meals, initialType = "all", initialQuery = "" }: {
           );
         })
       )}
-      <BasketBar lines={basket} />
+      <BasketBar lines={basket} whatsapp={whatsapp} />
+      {basket.length > 0 ? <div className="h-28" /> : null}
     </div>
   );
 }
 
-function BasketBar({ lines }: { lines: MenuLine[] }) {
+function BasketBar({ lines, whatsapp }: { lines: MenuLine[]; whatsapp: string }) {
+  const [ask, setAsk] = useState(false);
+  const [name, setName] = useState("");
+  const [address, setAddress] = useState("");
+  const [pin, setPin] = useState("");
+  useEffect(() => {
+    const person = readPerson();
+    setName(person.name);
+    setAddress(person.address);
+  }, [lines]);
   const count = lines.reduce((sum, line) => sum + line.quantity, 0);
   const total = lines.reduce((sum, line) => sum + line.pricePaise * line.quantity, 0);
   if (count === 0) return null;
+  const person = { name: name.trim(), address: address.trim(), pin: pin.trim() };
+  const ready = person.name.length >= 2 && person.address.length >= 4 && /^\d{6}$/.test(person.pin);
+  const outside = ready && person.pin !== SERVED_PIN;
+  const href = ready ? whatsappHref(whatsapp, outside ? outsideAreaText(person) : menuOrderText({ ...person, lines })) : "";
+  if (ask) {
+    return (
+      <div className="fixed inset-x-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-30 rounded-[28px] bg-white p-4 text-[#1A4A16] shadow-[0_16px_40px_rgba(26,74,22,0.18)] md:bottom-6">
+        <p className="text-sm font-semibold">Place this order</p>
+        <label className="mt-3 block text-sm font-semibold">Name
+          <input className="field mt-1" value={name} onChange={(event) => setName(event.target.value)} />
+        </label>
+        <label className="mt-3 block text-sm font-semibold">Address
+          <input className="field mt-1" value={address} onChange={(event) => setAddress(event.target.value)} placeholder="Flat, street, area" />
+        </label>
+        <label className="mt-3 block text-sm font-semibold">PIN code
+          <input className="field mt-1" inputMode="numeric" maxLength={6} value={pin} onChange={(event) => setPin(event.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="500081" />
+        </label>
+        <p className="mt-3 text-sm leading-6 text-[#6A5A4E]">Delivery charges vary by location and are not included in {formatInr(total)}.</p>
+        {outside ? <p className="mt-2 text-sm text-[#7a3410]">PIN {person.pin} is outside 500081. This sends your name and address so we can reply.</p> : null}
+        {href ? (
+          <a className="btn btn-accent mt-4 w-full" href={href} target="_blank" rel="noreferrer" onClick={() => writePerson(person)}>Send on WhatsApp</a>
+        ) : (
+          <p className="mt-3 text-sm text-[#6A5A4E]">Enter your name, address, and a 6-digit PIN. WhatsApp stays closed until those are filled in.</p>
+        )}
+        <button type="button" className="mt-3 text-sm font-semibold text-[#1A4A16]" onClick={() => setAsk(false)}>Back to the menu</button>
+      </div>
+    );
+  }
   return (
     <div className="fixed inset-x-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-30 flex items-center justify-between gap-3 rounded-full bg-[#1A4A16] px-4 py-2 text-white shadow-[0_12px_30px_rgba(26,74,22,0.2)] md:bottom-6">
       <div>
         <p className="text-[11px] uppercase tracking-wide text-white/70">{count} {count === 1 ? "item" : "items"} · delivery extra</p>
         <p className="text-lg font-semibold">{formatInr(total)}</p>
       </div>
-      <Link className="btn btn-accent" href="/cart">Check name and PIN</Link>
+      <button type="button" className="btn btn-accent" onClick={() => setAsk(true)}>Place order</button>
     </div>
   );
 }

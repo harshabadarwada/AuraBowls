@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { MenuBrowser } from "@/components/menu-browser";
 import { Stage } from "@/components/stage";
+import { businessWhatsapp } from "@/lib/order-message";
 import { getSettings, listMeals } from "@/server/catalog";
 
 export function generateMetadata({ params }: { params: Promise<{ type: string }> }): Promise<Metadata> {
@@ -21,7 +22,7 @@ export default async function MealTypePage({ params }: { params: Promise<{ type:
   return (
     <div>
       <Stage eyebrow="Menu" title={type[0].toUpperCase() + type.slice(1)} copy={meals.length === 0 ? `No ${type} meals are published.` : undefined} />
-      {meals.length === 0 ? null : <MenuBrowser meals={meals} initialType={type} />}
+      {meals.length === 0 ? null : <MenuBrowser meals={meals} initialType={type} whatsapp={businessWhatsapp(settings?.supportWhatsapp || "")} />}
     </div>
   );
 }
