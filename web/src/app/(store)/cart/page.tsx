@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { CartReview } from "@/components/cart-review";
-import { db } from "@/lib/db";
+import { MenuCart } from "@/components/menu-cart";
+import { businessWhatsapp } from "@/lib/order-message";
+import { getSettings } from "@/server/catalog";
 
 export const metadata: Metadata = { title: "Cart", robots: { index: false, follow: false } };
 
 export default async function CartPage() {
-  const meals = await db().meal.findMany({ select: { id: true, name: true } });
-  const mealNames = Object.fromEntries(meals.map((meal) => [meal.id, meal.name]));
-  return <CartReview mealNames={mealNames} />;
+  const settings = await getSettings().catch(() => null);
+  return <MenuCart whatsapp={businessWhatsapp(settings?.supportWhatsapp || "")} />;
 }

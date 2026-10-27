@@ -38,17 +38,22 @@ function useCartCount() {
   useEffect(() => {
     const read = () => {
       try {
+        const menu = sessionStorage.getItem("aurabowls.menu.v1");
+        const lines = menu ? JSON.parse(menu) as { quantity?: number }[] : [];
+        const menuCount = Array.isArray(lines) ? lines.reduce((sum, line) => sum + (line.quantity || 0), 0) : 0;
         const raw = sessionStorage.getItem("aurabowls.draft.v1");
         const draft = raw ? JSON.parse(raw) : null;
-        setCount(draft?.selections?.length || 0);
+        setCount(menuCount || draft?.selections?.length || 0);
       } catch {
         setCount(0);
       }
     };
     read();
+    window.addEventListener("aurabowls-menu", read);
     window.addEventListener("aurabowls-draft", read);
     window.addEventListener("focus", read);
     return () => {
+      window.removeEventListener("aurabowls-menu", read);
       window.removeEventListener("aurabowls-draft", read);
       window.removeEventListener("focus", read);
     };

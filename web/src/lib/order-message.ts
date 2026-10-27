@@ -87,6 +87,27 @@ export function orderSummaryText(input: {
   return body;
 }
 
+export function businessWhatsapp(stored = "") {
+  return (process.env.ORDER_WHATSAPP || process.env.NEXT_PUBLIC_ORDER_WHATSAPP || stored || "").replace(/[^\d]/g, "");
+}
+
+export function menuOrderText(lines: { name: string; quantity: number; pricePaise: number }[]) {
+  const total = lines.reduce((sum, line) => sum + line.pricePaise * line.quantity, 0);
+  return [
+    "Hello AuraBowls,",
+    "I want to order these meals. Please send the payment QR on this chat.",
+    "",
+    ...lines.map((line) => `${line.quantity} × ${line.name} — ${formatInr(line.pricePaise * line.quantity)}`),
+    "",
+    `Menu total: ${formatInr(total)}`,
+    "I will pay after you send the QR. Please confirm delivery on this chat.",
+    "",
+    "Name:",
+    "PIN:",
+    "Note:",
+  ].join("\n");
+}
+
 export function whatsappHref(phone: string, text: string) {
   const digits = phone.replace(/\D/g, "");
   if (!digits) return "";

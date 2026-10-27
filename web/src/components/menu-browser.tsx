@@ -1,10 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { MealCard } from "@/components/meal-card";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { addMenuLine, readMenu, writeMenu, type MenuLine } from "@/components/draft";
+import { formatInr, dietLabel } from "@/lib/format";
+import { menuOrderText, whatsappHref } from "@/lib/order-message";
 import type { PublicMeal } from "@/server/catalog";
 
-export function MenuBrowser({ meals, initialType = "all", initialQuery = "" }: { meals: PublicMeal[]; initialType?: string; initialQuery?: string }) {
+export function MenuBrowser({ meals, whatsapp = "", initialType = "all", initialQuery = "" }: { meals: PublicMeal[]; whatsapp?: string; initialType?: string; initialQuery?: string }) {
   const [type, setType] = useState(initialType);
   const [category, setCategory] = useState("all");
   const [diet, setDiet] = useState("all");
@@ -23,6 +26,16 @@ export function MenuBrowser({ meals, initialType = "all", initialQuery = "" }: {
     return [...set].slice(0, 12);
   }, [meals]);
   const [ingredient, setIngredient] = useState("");
+  const [basket, setBasket] = useState<MenuLine[]>([]);
+  useEffect(() => { setBasket(readMenu()); }, []);
+  function refresh(next: MenuLine[]) {
+    writeMenu(next);
+    setBasket(next);
+  }
+  function add(meal: PublicMeal) {
+    addMenuLine({ slug: meal.slug, name: meal.name, pricePaise: meal.pricePaise, mealType: meal.mealType });
+    setBasket(readMenu());
+  }
 
   const visible = meals.filter((meal) => {
     if (type !== "all" && meal.mealType !== type) return false;
@@ -90,17 +103,58 @@ export function MenuBrowser({ meals, initialType = "all", initialQuery = "" }: {
           return (
             <section key={slug} className="mt-8">
               <h2 className="text-2xl text-[#1A4A16]">{title}</h2>
-              <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {items.map((meal, index) => (
-                  <div key={meal.id} className="story" style={{ animationDelay: `${Math.min(index, 6) * 70}ms` }}>
-                    <MealCard meal={meal} />
-                  </div>
-                ))}
-              </div>
+              <ul className="mt-3 overflow-hidden rounded-[20px] border border-[#EAE4DD] bg-white">
+                {items.map((meal) => {
+                  const line = basket.find((item) => item.slug === meal.slug);
+                  return (
+                    <li key={meal.slug} className="flex items-center gap-3 border-b border-[#EAE4DD] p-3 last:border-b-0">
+                      <Link href={`/meals/${meal.slug}`} className="plate h-14 w-14 shrink-0 overflow-hidden rounded-full bg-[#EAF6DC]">
+                        {meal.imageUrl ? <img src={meal.imageUrl} alt="" /> : null}
+                      </Link>
+                      <div className="min-w-0 flex-1">
+                        <Link href={`/meals/${meal.slug}`} className="block truncate font-semibold text-[#1A4A16]">{meal.name}</Link>
+                        <p className="truncate text-xs text-[#6A5A4E]">{meal.portionLabel} · {meal.dietTags.map(dietLabel).join(", ") || meal.mealType}</p>
+                      </div>
+                      <div className="shrink-0 text-right">
+                        <p className="text-sm font-semibold text-[#F15C00]">
+                          {meal.compareAtPaise > meal.pricePaise ? <span className="mr-1 font-medium text-[#6A5A4E] line-through">{formatInr(meal.compareAtPaise)}</span> : null}
+                          {formatInr(meal.pricePaise)}
+                        </p>
+                        {line ? (
+                          <span className="mt-1 inline-flex items-center gap-2">
+                            <button type="button" className="grid h-8 w-8 place-items-center rounded-full bg-[#EAF6DC]" aria-label={`Fewer ${meal.name}`} onClick={() => refresh(basket.map((item) => item.slug === meal.slug ? { ...item, quantity: item.quantity - 1 } : item).filter((item) => item.quantity > 0))}>−</button>
+                            <span className="w-4 text-center text-sm font-semibold">{line.quantity}</span>
+                            <button type="button" className="grid h-8 w-8 place-items-center rounded-full bg-[#F15C00] text-white" aria-label={`More ${meal.name}`} onClick={() => add(meal)}>+</button>
+                          </span>
+                        ) : (
+                          <button type="button" className="mt-1 text-sm font-semibold text-[#1A4A16]" onClick={() => add(meal)}>Add</button>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
             </section>
           );
         })
       )}
+      <BasketBar lines={basket} whatsapp={whatsapp} />
+    </div>
+  );
+}
+
+function BasketBar({ lines, whatsapp }: { lines: MenuLine[]; whatsapp: string }) {
+  const count = lines.reduce((sum, line) => sum + line.quantity, 0);
+  const total = lines.reduce((sum, line) => sum + line.pricePaise * line.quantity, 0);
+  if (count === 0) return null;
+  const href = whatsappHref(whatsapp, menuOrderText(lines));
+  return (
+    <div className="fixed inset-x-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-30 flex items-center justify-between gap-3 rounded-full bg-[#1A4A16] px-4 py-2 text-white shadow-[0_12px_30px_rgba(26,74,22,0.2)] md:bottom-6">
+      <div>
+        <p className="text-[11px] uppercase tracking-wide text-white/70">{count} {count === 1 ? "item" : "items"}</p>
+        <p className="text-lg font-semibold">{formatInr(total)}</p>
+      </div>
+      {href ? <a className="btn btn-accent" href={href} target="_blank" rel="noreferrer">Send on WhatsApp</a> : <Link className="btn btn-accent" href="/cart">Review order</Link>}
     </div>
   );
 }

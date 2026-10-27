@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { writeDraft } from "@/components/draft";
+import { addMenuLine } from "@/components/draft";
 import type { PublicMeal } from "@/server/catalog";
 
 export function AddMealButton({ meal }: { meal: PublicMeal }) {
@@ -13,22 +13,11 @@ export function AddMealButton({ meal }: { meal: PublicMeal }) {
     <button
       className="btn btn-accent w-full sm:w-auto"
       onClick={() => {
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        const startDate = tomorrow.toISOString().slice(0, 10);
-        writeDraft({
-          mode: "single",
-          planSlug: null,
-          mealType: meal.mealType as "breakfast" | "lunch",
-          startDate,
-          pinCode: "",
-          couponCode: "",
-          selections: [{ date: startDate, mealId: meal.id, addonIds: [], quantity: 1, note: "", slotId: "" }],
-        });
+        addMenuLine({ slug: meal.slug, name: meal.name, pricePaise: meal.pricePaise, mealType: meal.mealType });
         router.push("/cart");
       }}
     >
-      Add to cart
+      Add and send on WhatsApp
     </button>
   );
 }

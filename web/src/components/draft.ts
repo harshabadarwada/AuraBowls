@@ -38,3 +38,37 @@ export function clearDraft() {
   sessionStorage.removeItem(KEY);
   window.dispatchEvent(new Event("aurabowls-draft"));
 }
+
+export type MenuLine = {
+  slug: string;
+  name: string;
+  pricePaise: number;
+  quantity: number;
+  mealType: string;
+};
+
+const MENU_KEY = "aurabowls.menu.v1";
+
+export function readMenu(): MenuLine[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = sessionStorage.getItem(MENU_KEY);
+    const lines = raw ? (JSON.parse(raw) as MenuLine[]) : [];
+    return Array.isArray(lines) ? lines.filter((line) => line.slug && line.quantity > 0) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function writeMenu(lines: MenuLine[]) {
+  sessionStorage.setItem(MENU_KEY, JSON.stringify(lines.filter((line) => line.quantity > 0)));
+  window.dispatchEvent(new Event("aurabowls-menu"));
+}
+
+export function addMenuLine(line: Omit<MenuLine, "quantity">, quantity = 1) {
+  const lines = readMenu();
+  const found = lines.find((item) => item.slug === line.slug);
+  if (found) found.quantity = Math.min(6, found.quantity + quantity);
+  else lines.push({ ...line, quantity: Math.min(6, Math.max(1, quantity)) });
+  writeMenu(lines);
+}
