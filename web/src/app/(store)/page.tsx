@@ -16,7 +16,7 @@ export default async function HomePage() {
     listMeals().catch(() => []),
     db().planTemplate.findMany({ where: { active: true }, orderBy: { fixedDeliveryCount: "asc" } }).catch(() => []),
     db().goal.findMany({ where: { active: true } }).catch(() => []),
-  ]);
+  ]).catch(() => [[], [], []] as [Awaited<ReturnType<typeof listMeals>>, never[], never[]]);
   const popular = meals.filter((meal) => meal.isPopular).slice(0, 3);
   const menuBowl = meals.find((meal) => meal.mealType === "breakfast") || meals[0];
   const planBowl = meals.find((meal) => meal.mealType === "lunch") || meals[1];

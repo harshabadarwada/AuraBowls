@@ -4,7 +4,7 @@ import { getSettings } from "@/server/catalog";
 export const dynamic = "force-dynamic";
 
 export default async function StoreLayout({ children }: { children: React.ReactNode }) {
-  const settings = await getSettings();
+  const settings = await getSettings().catch(() => null);
   return (
     <>
       <Header />
