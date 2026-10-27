@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { publicSiteUrl } from "@/lib/site";
 import { currentAdmin } from "@/server/auth";
 import { AdminError, acceptOrder, addInventoryItem, adjustInventory, anonymizeCustomer, assignDelivery, changeAddress, createClosure, createRefund, decideRefund, failDelivery, logChangeRequest, rejectOrder, replaceMeal, rescheduleDelivery, resolveChangeRequest, rotateTracking, saveArea, saveBowlComponent, saveCoupon, saveMeal, savePromotion, saveSettings, saveSlot, setDeliveryStatus } from "@/server/admin";
 import { runMealChecks } from "@/server/meal-check";
@@ -76,7 +77,7 @@ export async function POST(request: Request) {
       return NextResponse.redirect(url, 303);
     } else if (type === "rotate_tracking") {
       const token = await rotateTracking(actor, input.orderId);
-      const url = new URL("/track/" + token, process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000");
+      const url = new URL("/track/" + token, publicSiteUrl());
       return new NextResponse(
         `<!doctype html><html><body style="font-family:sans-serif;background:#F8F7F1;color:#292D29;padding:40px"><h1>New tracking link</h1><p>The previous link no longer works. Send this one only after you have confirmed the customer.</p><p><a href="${url.href}">${url.href}</a></p><p><a href="${safeReturn}">Back to admin</a></p></body></html>`,
         { headers: { "content-type": "text/html; charset=utf-8" } },

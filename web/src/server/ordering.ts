@@ -9,6 +9,7 @@ import { parseWeekdays } from "@/lib/time";
 import { Prisma } from "@prisma/client";
 import { CapacityError, holdCapacity, releaseReserved } from "./capacity";
 import { grantMatches } from "./otp";
+import { catalogPreview, catalogQuote } from "./published-plans";
 
 const selectionSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -269,6 +270,17 @@ const previewSchema = z.object({
 });
 
 export async function previewSchedule(raw: z.infer<typeof previewSchema>) {
+  try {
+    return await previewScheduleFromDatabase(raw);
+  } catch (error) {
+    if (error instanceof OrderError) throw error;
+    const fallback = catalogPreview(raw);
+    if (!fallback.ok) throw new OrderError(fallback.code, fallback.message);
+    return fallback;
+  }
+}
+
+async function previewScheduleFromDatabase(raw: z.infer<typeof previewSchema>) {
   const settings = await db().businessSettings.findUnique({ where: { id: "default" } });
   if (!settings) throw new OrderError("not_ready", "AuraBowls is not ready to take orders yet.");
   const area = await db().serviceArea.findUnique({ where: { pinCode: raw.pinCode } });
@@ -306,6 +318,7 @@ export async function previewSchedule(raw: z.infer<typeof previewSchema>) {
     defaultMealId: defaultMeal?.id || "",
     lunchMealId: lunchMeal?.id || "",
     area: { label: area.label, localityNote: area.localityNote, coverage: area.coverage, deliveryFeePaise: area.deliveryFeePaise },
+    orderOnWhatsapp: false as const,
   };
 }
 
@@ -340,28 +353,36 @@ async function shotBundleDiscount(deliveries: { meal: { category?: { slug: strin
 }
 
 export async function quoteDraft(input: DraftInput) {
-  await sweepExpired();
-  const prepared = await prepareQuote(input);
-  return {
-    quote: prepared.priced,
-    dates: prepared.schedule.dates,
-    skipped: prepared.schedule.skipped.slice(0, 8),
-    area: {
-      label: prepared.area.label,
-      coverage: prepared.area.coverage,
-      localityNote: prepared.area.localityNote,
-      deliveryFeePaise: prepared.area.deliveryFeePaise,
-    },
-    reservationMinutes: prepared.settings.reservationMinutes,
-    lines: prepared.deliveries.map((delivery) => ({
-      date: delivery.date,
-      mealName: delivery.meal.name,
-      mealType: delivery.meal.mealType,
-      quantity: delivery.selection.quantity,
-      addons: delivery.addons.map((addon) => addon.name),
-      slotLabel: delivery.slot.label,
-    })),
-  };
+  try {
+    await sweepExpired();
+    const prepared = await prepareQuote(input);
+    return {
+      quote: prepared.priced,
+      dates: prepared.schedule.dates,
+      skipped: prepared.schedule.skipped.slice(0, 8),
+      area: {
+        label: prepared.area.label,
+        coverage: prepared.area.coverage,
+        localityNote: prepared.area.localityNote,
+        deliveryFeePaise: prepared.area.deliveryFeePaise,
+      },
+      reservationMinutes: prepared.settings.reservationMinutes,
+      lines: prepared.deliveries.map((delivery) => ({
+        date: delivery.date,
+        mealName: delivery.meal.name,
+        mealType: delivery.meal.mealType,
+        quantity: delivery.selection.quantity,
+        addons: delivery.addons.map((addon) => addon.name),
+        slotLabel: delivery.slot.label,
+      })),
+      orderOnWhatsapp: false as const,
+    };
+  } catch (error) {
+    if (error instanceof OrderError) throw error;
+    const fallback = catalogQuote(input);
+    if (!fallback.ok) throw new OrderError(fallback.code, fallback.message, undefined, fallback.dates);
+    return fallback;
+  }
 }
 
 export async function placeOrder(raw: z.infer<typeof checkoutSchema>) {

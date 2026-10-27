@@ -3,9 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { readDraft, writeDraft, type DraftSelection } from "@/components/draft";
+import { readDraft, readPerson, writeDraft, writePerson, type DraftSelection } from "@/components/draft";
 import { MealPhoto } from "@/components/meal-card";
 import { formatInr } from "@/lib/format";
+import { planOrderText, whatsappHref } from "@/lib/order-message";
 import type { PublicMeal } from "@/server/catalog";
 
 type Slot = { id: string; label: string; startTime: string; mealType: "breakfast" | "lunch" };
@@ -70,7 +71,7 @@ function cadenceLabel(cadence: string) {
   return "This month";
 }
 
-export function PlanBuilder({ plan, meals, slots, options }: { plan: Plan; meals: PublicMeal[]; slots: Slot[]; options: PlanOption[] }) {
+export function PlanBuilder({ plan, meals, slots, options, whatsapp }: { plan: Plan; meals: PublicMeal[]; slots: Slot[]; options: PlanOption[]; whatsapp: string }) {
   const router = useRouter();
   const breakfastSlots = slots.filter((slot) => slot.mealType === "breakfast");
   const lunchSlots = slots.filter((slot) => slot.mealType === "lunch");
@@ -87,6 +88,9 @@ export function PlanBuilder({ plan, meals, slots, options }: { plan: Plan; meals
   const [quote, setQuote] = useState<Quote | null>(null);
   const [priceError, setPriceError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [customerName, setCustomerName] = useState("");
+  const [address, setAddress] = useState("");
+  const [orderOnWhatsapp, setOrderOnWhatsapp] = useState(false);
   const mealById = useMemo(() => new Map(meals.map((meal) => [meal.id, meal])), [meals]);
   const slotById = useMemo(() => new Map(slots.map((slot) => [slot.id, slot])), [slots]);
   const lengths = options.filter((option) => option.mealType === plan.mealType).sort((a, b) => a.fixedDeliveryCount - b.fixedDeliveryCount);
@@ -99,6 +103,10 @@ export function PlanBuilder({ plan, meals, slots, options }: { plan: Plan; meals
   const dayCount = dates.length || plan.fixedDeliveryCount;
 
   useEffect(() => {
+    const person = readPerson();
+    setCustomerName(person.name);
+    setAddress(person.address);
+    if (person.pin === "500081") setPinCode(person.pin);
     const draft = readDraft();
     if (!draft || draft.planSlug !== plan.slug || draft.selections.length === 0) return;
     setStartDate(draft.startDate || kolkataTomorrow());
@@ -142,6 +150,7 @@ export function PlanBuilder({ plan, meals, slots, options }: { plan: Plan; meals
         lunchSlotId: plan.mealType === "both" ? lunchSlotId : "",
       });
       setNote(preview.area?.localityNote || "");
+      setOrderOnWhatsapp(preview.orderOnWhatsapp === true);
       const kept = rows;
       const next = (preview.dates as string[]).flatMap((date) => {
         if (plan.mealType === "both") {
@@ -188,6 +197,17 @@ export function PlanBuilder({ plan, meals, slots, options }: { plan: Plan; meals
   }
 
   const sitting = plan.mealType === "both" ? `${dayCount} days · breakfast and lunch` : `${dayCount} ${plan.mealType} ${dayCount === 1 ? "delivery" : "deliveries"}`;
+  const personReady = customerName.trim().length >= 2 && address.trim().length >= 4 && pinCode === "500081";
+  const planHref = orderOnWhatsapp && quote && rows.length > 0 && personReady
+    ? whatsappHref(whatsapp, planOrderText({
+      name: customerName.trim(),
+      address: address.trim(),
+      pin: pinCode,
+      planName: plan.name,
+      totalPaise: quote.totalPaise,
+      lines: rows.map((row) => ({ date: row.date, mealName: mealById.get(row.mealId)?.name || "Meal", slotLabel: slotById.get(row.slotId)?.label || "" })),
+    }))
+    : "";
 
   return (
     <div className="mx-auto max-w-5xl pb-8">
@@ -306,7 +326,19 @@ export function PlanBuilder({ plan, meals, slots, options }: { plan: Plan; meals
             </dl>
           ) : null}
         </div>
-        <button className={`btn btn-accent ${rows.length === 0 || !quote ? "opacity-50" : ""}`} type="button" disabled={rows.length === 0 || !quote} onClick={continueToDelivery}>Continue to delivery</button>
+        {orderOnWhatsapp ? (
+          <div className="w-full max-w-sm">
+            <label className="block text-sm font-semibold text-[#1A4A16]">Name
+              <input className="field mt-1" value={customerName} onChange={(event) => { setCustomerName(event.target.value); writePerson({ name: event.target.value, address, pin: pinCode }); }} />
+            </label>
+            <label className="mt-3 block text-sm font-semibold text-[#1A4A16]">Address
+              <input className="field mt-1" value={address} onChange={(event) => { setAddress(event.target.value); writePerson({ name: customerName, address: event.target.value, pin: pinCode }); }} placeholder="Flat, street, area" />
+            </label>
+            {planHref ? <a className="btn btn-accent mt-4 w-full" href={planHref} target="_blank" rel="noreferrer">Send this plan on WhatsApp</a> : <p className="mt-3 text-sm text-[#6A5A4E]">Add your name and address. The message includes both, plus the days and the total.</p>}
+          </div>
+        ) : (
+          <button className={`btn btn-accent ${rows.length === 0 || !quote ? "opacity-50" : ""}`} type="button" disabled={rows.length === 0 || !quote} onClick={continueToDelivery}>Continue to delivery</button>
+        )}
       </section>
     </div>
   );

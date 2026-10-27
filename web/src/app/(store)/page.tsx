@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { MealCard } from "@/components/meal-card";
 import { listMeals } from "@/server/catalog";
+import { publishedPlans } from "@/server/published-plans";
 import { db } from "@/lib/db";
 import type { CSSProperties } from "react";
 
@@ -21,7 +22,8 @@ export default async function HomePage() {
   const spotlight = popular.length > 0 ? popular : meals.slice(0, 3);
   const menuBowl = meals.find((meal) => meal.mealType === "breakfast") || meals[0];
   const planBowl = meals.find((meal) => meal.mealType === "lunch") || meals[1];
-  const featured = plans.find((plan) => plan.slug === "weekday-breakfast") || plans.find((plan) => plan.mealType === "breakfast" && plan.cadence === "weekly") || plans[0];
+  const listed = plans.length > 0 ? plans : publishedPlans();
+  const featured = listed.find((plan) => plan.slug === "weekday-breakfast") || listed.find((plan) => plan.mealType === "breakfast" && plan.cadence === "weekly") || listed[0];
   const days = featured ? Math.min(featured.fixedDeliveryCount, 7) : 0;
 
   return (
@@ -122,7 +124,7 @@ export default async function HomePage() {
           <p className="mt-4 max-w-xl text-sm leading-7 text-[#6A5A4E]">Pick a length, then walk the days. Swaps and extras are priced again on the server. Nothing renews or charges on its own.</p>
           {featured ? (
             <div className="mt-6">
-              <p className="text-sm font-semibold text-[#1A4A16]">{featured.name}</p>
+              <Link href={`/plans/${featured.slug}`} className="text-sm font-semibold text-[#1A4A16]">{featured.name}</Link>
               <ol className="mt-3 flex gap-2" aria-label={`${featured.fixedDeliveryCount} deliveries`}>
                 {Array.from({ length: days }, (_, index) => (
                   <li key={index} className="grid h-14 w-12 place-items-center rounded-2xl border border-[#EAE4DD] bg-white text-sm font-semibold text-[#1A4A16] shadow-[0_8px_16px_rgba(34,37,31,0.04)]">

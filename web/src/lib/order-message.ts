@@ -149,6 +149,31 @@ export function menuOrderText(input: { name: string; address: string; pin: strin
   ].join("\n");
 }
 
+export function planOrderText(input: {
+  name: string;
+  address: string;
+  pin: string;
+  planName: string;
+  lines: { date: string; mealName: string; slotLabel: string }[];
+  totalPaise: number;
+}) {
+  if (input.pin.trim() !== "500081") return outsideAreaText(input);
+  const day = (iso: string) => {
+    const [year, month, dayNumber] = iso.split("-").map(Number);
+    return new Date(Date.UTC(year, month - 1, dayNumber)).toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
+  };
+  return [
+    ...identity(input),
+    "",
+    `Plan: ${input.planName}`,
+    "I want this prepaid plan. Please send the payment QR on this chat. I have not paid yet.",
+    "",
+    ...input.lines.map((line) => `${day(line.date)}: ${line.mealName} (${line.slotLabel})`),
+    "",
+    `Total: ${formatInr(input.totalPaise)}`,
+  ].join("\n");
+}
+
 export function whatsappHref(phone: string, text: string) {
   const digits = phone.replace(/\D/g, "");
   if (!digits) return "";
