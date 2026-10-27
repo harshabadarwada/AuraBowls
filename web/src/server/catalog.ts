@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { catalog, categories } from "../../prisma/catalog";
 
 export async function getSettings() {
   return db().businessSettings.findUnique({ where: { id: "default" } });
@@ -35,7 +36,46 @@ export type PublicMeal = {
   addons: { id: string; name: string; description: string; pricePaise: number }[];
 };
 
+function publishedCatalog(mealType?: string): PublicMeal[] {
+  const names = new Map<string, string>(categories.map((item) => [item[0], item[1]]));
+  const order = new Map<string, number>(categories.map((item) => [item[0], item[4]]));
+  return catalog
+    .filter((meal) => !mealType || meal.type === mealType)
+    .sort((left, right) => (order.get(left.category) ?? 0) - (order.get(right.category) ?? 0) || left.name.localeCompare(right.name))
+    .map((meal) => ({
+      id: meal.slug,
+      slug: meal.slug,
+      name: meal.name,
+      description: meal.description,
+      mealType: meal.type,
+      pricePaise: meal.price,
+      compareAtPaise: meal.compareAt,
+      categorySlug: meal.category,
+      categoryName: names.get(meal.category) || meal.category,
+      portionLabel: meal.portion,
+      dietTags: [meal.diet],
+      ingredients: meal.ingredients,
+      allergens: "",
+      allergenVerified: false,
+      imageUrl: meal.image,
+      imageIsPlaceholder: true,
+      available: true,
+      isPopular: false,
+      nutritionStatus: "missing",
+      calories: null,
+      proteinTenths: null,
+      carbsTenths: null,
+      fatTenths: null,
+      fiberTenths: null,
+      nutritionSource: "",
+      highProtein: false,
+      goals: [],
+      addons: [],
+    }));
+}
+
 export async function listMeals(mealType?: string): Promise<PublicMeal[]> {
+  try {
   const settings = await getSettings();
   const minProtein = (settings?.proteinGoalMinG ?? 25) * 10;
   const meals = await db().meal.findMany({
@@ -86,6 +126,9 @@ export async function listMeals(mealType?: string): Promise<PublicMeal[]> {
       pricePaise: link.addon.pricePaise,
     })),
   }));
+  } catch {
+    return publishedCatalog(mealType);
+  }
 }
 
 export async function getMeal(slug: string) {

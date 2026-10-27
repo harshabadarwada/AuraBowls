@@ -18,6 +18,7 @@ export default async function HomePage() {
     db().goal.findMany({ where: { active: true } }).catch(() => []),
   ]).catch(() => [[], [], []] as [Awaited<ReturnType<typeof listMeals>>, never[], never[]]);
   const popular = meals.filter((meal) => meal.isPopular).slice(0, 3);
+  const spotlight = popular.length > 0 ? popular : meals.slice(0, 3);
   const menuBowl = meals.find((meal) => meal.mealType === "breakfast") || meals[0];
   const planBowl = meals.find((meal) => meal.mealType === "lunch") || meals[1];
   const featured = plans.find((plan) => plan.slug === "weekday-breakfast") || plans.find((plan) => plan.mealType === "breakfast" && plan.cadence === "weekly") || plans[0];
@@ -86,12 +87,12 @@ export default async function HomePage() {
 
       <section className="story">
         <div className="flex items-end justify-between gap-4">
-          <h2 className="display text-3xl text-[#1A4A16] sm:text-4xl">Popular bowls</h2>
+          <h2 className="display text-3xl text-[#1A4A16] sm:text-4xl">{popular.length > 0 ? "Popular bowls" : "From the menu"}</h2>
           <Link href="/menu" className="text-sm font-semibold text-[#1A4A16]">Full menu</Link>
         </div>
-        {popular.length === 0 ? <p className="mt-4 text-[#6A5A4E]">The menu has not been published yet.</p> : (
+        {spotlight.length === 0 ? <p className="mt-4 text-[#6A5A4E]">The menu has not been published yet.</p> : (
           <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {popular.map((meal, index) => (
+            {spotlight.map((meal, index) => (
               <div key={meal.id} className="story" style={{ animationDelay: `${index * 90}ms` }}>
                 <MealCard meal={meal} />
               </div>
