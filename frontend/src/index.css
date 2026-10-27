@@ -1,0 +1,121 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap');
+
+:root {
+  --color-bg: #F5F7F2;
+  --color-bg-card: #FFFFFF;
+  --color-bg-accent: #EBF1E5;
+  --color-primary: #1C3822;
+  --color-primary-light: #2D5A37;
+  --color-accent-green: #4CAF50;
+  --color-leaf: #388E3C;
+  --color-text-dark: #1E293B;
+  --color-text-muted: #64748B;
+  --color-price-badge: #1C3822;
+  --color-bestseller: #D97706;
+  --font-serif: 'Playfair Display', Georgia, serif;
+  --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  --shadow-sm: 0 2px 8px rgba(28, 56, 34, 0.05);
+  --shadow-md: 0 4px 20px rgba(28, 56, 34, 0.08);
+  --shadow-lg: 0 10px 30px rgba(28, 56, 34, 0.12);
+  --radius-card: 16px;
+  --radius-pill: 50px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-bg);
+  color: var(--color-text-dark);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font-family: var(--font-sans);
+  cursor: pointer;
+}
+
+.serif-font {
+  font-family: var(--font-serif);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #F1F5F9;
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+/* Base Layout Container */
+.app-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Badge styles */
+.badge-bestseller {
+  background: linear-gradient(135deg, #1C3822 0%, #2D5A37 100%);
+  color: #FFFFFF;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 4px 10px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.price-pill {
+  background-color: var(--color-price-badge);
+  color: #FFFFFF;
+  font-weight: 700;
+  font-size: 1.1rem;
+  padding: 6px 18px;
+  border-radius: var(--radius-pill);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(28, 56, 34, 0.2);
+}
+
+.price-pill-sm {
+  background-color: var(--color-price-badge);
+  color: #FFFFFF;
+  font-weight: 700;
+  font-size: 0.95rem;
+  padding: 4px 14px;
+  border-radius: var(--radius-pill);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* Glassmorphic overlay */
+.glass-modal {
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(8px);
+}

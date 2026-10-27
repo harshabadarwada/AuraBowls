@@ -1,0 +1,574 @@
+// AuraBowls transactional store.
+// Local default is SQLite. For production, switch the provider to postgresql
+// and point DATABASE_URL at managed Postgres. See docs/POSTGRES.md.
+// Money is integer paise. Calendar dates are YYYY-MM-DD in Asia/Kolkata.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model BusinessSettings {
+  id                   String   @id @default("default")
+  legalName            String   @default("AuraBowls")
+  brandName            String   @default("AuraBowls")
+  address              String   @default("")
+  gstin                String   @default("")
+  supportPhone         String   @default("")
+  supportWhatsapp      String   @default("")
+  email                String   @default("")
+  timezone             String   @default("Asia/Kolkata")
+  currency             String   @default("INR")
+  taxMode              String   @default("none")
+  taxRateBps           Int      @default(0)
+  taxLabel             String   @default("GST")
+  invoicePrefix        String   @default("AB-INV")
+  creditNotePrefix     String   @default("AB-CN")
+  nextInvoiceNumber    Int      @default(1)
+  nextCreditNumber     Int      @default(1)
+  reservationMinutes   Int      @default(10)
+  cutoffHours          Int      @default(24)
+  dinnerEnabled        Boolean  @default(false)
+  proteinGoalMinG     Int      @default(25)
+  operatingWeekdays    String   @default("1,2,3,4,5,6")
+  sheetsSpreadsheetId  String   @default("")
+  sheetsSyncEnabled    Boolean  @default(false)
+  updatedAt            DateTime @updatedAt
+}
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         String   @default("owner")
+  createdAt    DateTime @default(now())
+}
+
+model Customer {
+  id              String    @id @default(cuid())
+  name            String
+  phone           String    @unique
+  phoneVerifiedAt DateTime?
+  dietaryNotes    String    @default("")
+  allergyNotes    String    @default("")
+  preferences     String    @default("")
+  anonymizedAt    DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  address         SavedAddress?
+  orders          Order[]
+  verifications   PhoneVerification[]
+  dataRequests    DataRequest[]
+}
+
+model PhoneVerification {
+  id                 String    @id @default(cuid())
+  phone              String
+  channel            String
+  codeHash           String
+  expiresAt          DateTime
+  attempts           Int       @default(0)
+  maxAttempts        Int       @default(5)
+  consumedAt         DateTime?
+  grantHash          String    @default("")
+  grantUsedAt        DateTime?
+  resendAvailableAt  DateTime
+  dispatchStatus     String    @default("not_sent")
+  customerId         String?
+  customer           Customer? @relation(fields: [customerId], references: [id])
+  createdAt          DateTime  @default(now())
+  ipHash             String    @default("")
+
+  @@index([phone, createdAt])
+}
+
+model SavedAddress {
+  id           String   @id @default(cuid())
+  customerId   String   @unique
+  customer     Customer @relation(fields: [customerId], references: [id])
+  fullName     String
+  line1        String
+  line2        String   @default("")
+  landmark     String   @default("")
+  pinCode      String
+  city         String   @default("Hyderabad")
+  instructions String   @default("")
+  updatedAt    DateTime @updatedAt
+}
+
+model OfferRule {
+  id           String  @id @default(cuid())
+  slug         String  @unique
+  name         String
+  categorySlug String
+  quantity     Int
+  pricePaise   Int
+  active       Boolean @default(true)
+}
+
+model MealCategory {
+  id          String  @id @default(cuid())
+  slug        String  @unique
+  name        String
+  mealType    String
+  description String  @default("")
+  comingSoon  Boolean @default(false)
+  sortOrder   Int     @default(0)
+  meals       Meal[]
+}
+
+model Goal {
+  id          String     @id @default(cuid())
+  slug        String     @unique
+  name        String
+  description String
+  active      Boolean    @default(true)
+  meals       MealGoal[]
+}
+
+model Meal {
+  id                 String             @id @default(cuid())
+  slug               String             @unique
+  name               String
+  description        String
+  categoryId         String
+  category           MealCategory       @relation(fields: [categoryId], references: [id])
+  mealType           String
+  pricePaise         Int
+  compareAtPaise     Int                @default(0)
+  portionLabel       String             @default("")
+  dietTags           String             @default("")
+  ingredients        String             @default("")
+  allergens          String             @default("")
+  allergenVerified   Boolean            @default(false)
+  imageUrl           String             @default("")
+  imageIsPlaceholder Boolean            @default(true)
+  published          Boolean            @default(true)
+  available          Boolean            @default(true)
+  isPopular          Boolean            @default(false)
+  nutritionStatus    String             @default("missing")
+  calories           Int?
+  proteinTenths      Int?
+  carbsTenths        Int?
+  fatTenths          Int?
+  fiberTenths        Int?
+  nutritionSource    String             @default("")
+  defaultPortions    Int                @default(40)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  goals              MealGoal[]
+  addons             MealAddon[]
+  capacities         MealDateCapacity[]
+  deliveryItems      DeliveryItem[]
+}
+
+model MealGoal {
+  mealId String
+  goalId String
+  meal   Meal   @relation(fields: [mealId], references: [id], onDelete: Cascade)
+  goal   Goal   @relation(fields: [goalId], references: [id], onDelete: Cascade)
+
+  @@id([mealId, goalId])
+}
+
+model Addon {
+  id          String      @id @default(cuid())
+  name        String
+  description String      @default("")
+  pricePaise  Int
+  active      Boolean     @default(true)
+  meals       MealAddon[]
+}
+
+model MealAddon {
+  mealId  String
+  addonId String
+  meal    Meal   @relation(fields: [mealId], references: [id], onDelete: Cascade)
+  addon   Addon  @relation(fields: [addonId], references: [id], onDelete: Cascade)
+
+  @@id([mealId, addonId])
+}
+
+model PlanTemplate {
+  id                 String   @id @default(cuid())
+  slug               String   @unique
+  name               String
+  description        String
+  mealType           String
+  cadence            String
+  scheduleRule       String
+  fixedDeliveryCount Int
+  defaultMealSlug    String
+  companionMealSlug  String   @default("")
+  discountBps        Int      @default(0)
+  active             Boolean  @default(true)
+  imageUrl           String   @default("")
+  promoText          String   @default("")
+  createdAt          DateTime @default(now())
+}
+
+model ServiceArea {
+  id               String  @id @default(cuid())
+  pinCode          String  @unique
+  label            String
+  deliveryFeePaise Int     @default(0)
+  active           Boolean @default(true)
+  coverage         String  @default("pin")
+  localityNote     String  @default("")
+  weekdays         String  @default("1,2,3,4,5,6")
+}
+
+model DeliverySlot {
+  id        String  @id @default(cuid())
+  mealType  String
+  label     String
+  startTime String
+  endTime   String
+  capacity  Int
+  active    Boolean @default(true)
+  sortOrder Int     @default(0)
+}
+
+model KitchenClosure {
+  id        String   @id @default(cuid())
+  date      String
+  reason    String
+  mealType  String   @default("all")
+  createdAt DateTime @default(now())
+
+  @@unique([date, mealType])
+}
+
+model MealDateCapacity {
+  id            String @id @default(cuid())
+  mealId        String
+  meal          Meal   @relation(fields: [mealId], references: [id])
+  date          String
+  portionLimit  Int
+  reserved      Int    @default(0)
+  sold          Int    @default(0)
+
+  @@unique([mealId, date])
+}
+
+model SlotDateCapacity {
+  id        String @id @default(cuid())
+  slotId    String
+  date      String
+  slotLimit Int
+  reserved  Int    @default(0)
+  sold      Int    @default(0)
+
+  @@unique([slotId, date])
+}
+
+model Reservation {
+  id        String            @id @default(cuid())
+  token     String            @unique
+  orderId   String?           @unique
+  status    String            @default("active")
+  expiresAt DateTime
+  createdAt DateTime          @default(now())
+  lines     ReservationLine[]
+  order     Order?            @relation(fields: [orderId], references: [id])
+}
+
+model ReservationLine {
+  id            String      @id @default(cuid())
+  reservationId String
+  reservation   Reservation @relation(fields: [reservationId], references: [id])
+  date          String
+  mealId        String
+  slotId        String
+  mealQty       Int
+  slotQty       Int         @default(1)
+  released      Boolean     @default(false)
+}
+
+model Order {
+  id                  String              @id @default(cuid())
+  reference           String              @unique
+  trackingTokenHash   String              @unique
+  customerId          String
+  customer            Customer            @relation(fields: [customerId], references: [id])
+  planSlug            String              @default("")
+  planName            String              @default("")
+  cadence             String
+  mealType            String
+  status              String              @default("pending_payment")
+  acceptanceStatus    String              @default("pending")
+  currency            String              @default("INR")
+  mealSubtotalPaise   Int
+  referenceMealPaise  Int
+  customizationDeltaPaise Int             @default(0)
+  addonsPaise         Int                 @default(0)
+  deliveryFeePaise    Int
+  planDiscountPaise   Int                 @default(0)
+  couponCode          String              @default("")
+  couponId            String              @default("")
+  couponPaise         Int                 @default(0)
+  couponReturned      Boolean             @default(false)
+  taxPaise            Int                 @default(0)
+  taxRateBps          Int                 @default(0)
+  taxMode             String              @default("none")
+  taxLabel            String              @default("")
+  totalPaise          Int
+  priceSnapshotJson   String
+  customerName        String
+  customerPhone       String
+  allergyNotes        String              @default("")
+  dietaryNotes        String              @default("")
+  reconciliationFlag  String              @default("")
+  paidAt              DateTime?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  reservation         Reservation?
+  deliveries          ScheduledDelivery[]
+  payments            Payment[]
+  refunds             Refund[]
+  invoices            Invoice[]
+  feedback            Feedback[]
+  changeRequests      ChangeRequest[]
+
+  @@index([status, createdAt])
+  @@index([customerPhone])
+}
+
+model ScheduledDelivery {
+  id                  String         @id @default(cuid())
+  orderId             String
+  order               Order          @relation(fields: [orderId], references: [id])
+  date                String
+  mealType            String
+  slotId              String
+  slotLabel           String
+  slotStart           String
+  status              String         @default("scheduled")
+  addressSnapshotJson String
+  foodPaise           Int
+  addonPaise          Int
+  feePaise            Int
+  discountPaise       Int
+  taxPaise            Int
+  totalPaise          Int
+  notes               String         @default("")
+  failureReason       String         @default("")
+  contactOutcome      String         @default("")
+  resolution          String         @default("")
+  attemptedAt         String         @default("")
+  originalDate        String         @default("")
+  assignedTo          String         @default("")
+  packingStatus       String         @default("unprepared")
+  statusHistoryJson   String         @default("[]")
+  confirmStatus       String         @default("")
+  confirmReply        String         @default("")
+  items               DeliveryItem[]
+  feedback            Feedback?
+  packing             PackingRecord?
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+
+  @@unique([orderId, date, mealType])
+  @@index([date, status])
+}
+
+model DeliveryItem {
+  id                  String            @id @default(cuid())
+  deliveryId          String
+  delivery            ScheduledDelivery @relation(fields: [deliveryId], references: [id])
+  mealId              String?
+  meal                Meal?             @relation(fields: [mealId], references: [id])
+  nameSnapshot        String
+  quantity            Int
+  unitPricePaise      Int
+  addonsJson          String            @default("[]")
+  customizationNote   String            @default("")
+}
+
+model Payment {
+  id               String           @id @default(cuid())
+  orderId          String
+  order            Order            @relation(fields: [orderId], references: [id])
+  status           String           @default("pending")
+  amountPaise      Int
+  gateway          String           @default("razorpay")
+  gatewayOrderId   String           @default("")
+  gatewayPaymentId String           @default("")
+  simulatorNonce   String           @default("")
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  attempts         PaymentAttempt[]
+
+  @@index([gatewayOrderId])
+}
+
+model PaymentAttempt {
+  id        String   @id @default(cuid())
+  paymentId String
+  payment   Payment  @relation(fields: [paymentId], references: [id])
+  status    String
+  detail    String   @default("")
+  createdAt DateTime @default(now())
+}
+
+model GatewayEvent {
+  id          String   @id @default(cuid())
+  eventId     String   @unique
+  type        String
+  payloadHash String
+  processedAt DateTime @default(now())
+}
+
+model Refund {
+  id             String   @id @default(cuid())
+  orderId        String
+  order          Order    @relation(fields: [orderId], references: [id])
+  amountPaise    Int
+  reason         String
+  status         String   @default("pending_approval")
+  gatewayRefundId String  @default("")
+  idempotencyKey String   @unique
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Coupon {
+  id            String  @id @default(cuid())
+  code          String  @unique
+  type          String
+  value         Int
+  minOrderPaise Int     @default(0)
+  maxUses       Int     @default(0)
+  usedCount     Int     @default(0)
+  startsOn      String  @default("")
+  endsOn        String  @default("")
+  active        Boolean @default(true)
+  stackable     Boolean @default(false)
+}
+
+model Promotion {
+  id       String  @id @default(cuid())
+  title    String
+  body     String
+  active   Boolean @default(true)
+  startsOn String  @default("")
+  endsOn   String  @default("")
+}
+
+model Invoice {
+  id           String       @id @default(cuid())
+  number       String       @unique
+  orderId      String
+  order        Order        @relation(fields: [orderId], references: [id])
+  issuedAt     DateTime     @default(now())
+  snapshotJson String
+  totalPaise   Int
+  creditNotes  CreditNote[]
+}
+
+model CreditNote {
+  id           String   @id @default(cuid())
+  number       String   @unique
+  invoiceId    String
+  invoice      Invoice  @relation(fields: [invoiceId], references: [id])
+  refundId     String   @default("")
+  amountPaise  Int
+  reason       String
+  snapshotJson String
+  issuedAt     DateTime @default(now())
+
+  @@index([refundId])
+}
+
+model InventoryItem {
+  id             String            @id @default(cuid())
+  name           String
+  unit           String
+  quantityTenths Int              @default(0)
+  notes          String            @default("")
+  adjustments    StockAdjustment[]
+}
+
+model StockAdjustment {
+  id          String        @id @default(cuid())
+  itemId      String
+  item        InventoryItem @relation(fields: [itemId], references: [id])
+  deltaTenths Int
+  reason      String
+  createdAt   DateTime      @default(now())
+}
+
+model Feedback {
+  id         String            @id @default(cuid())
+  orderId    String
+  order      Order             @relation(fields: [orderId], references: [id])
+  deliveryId String            @unique
+  delivery   ScheduledDelivery @relation(fields: [deliveryId], references: [id])
+  rating     Int
+  comment    String            @default("")
+  mealName   String            @default("")
+  createdAt  DateTime          @default(now())
+}
+
+model PackingRecord {
+  id         String            @id @default(cuid())
+  deliveryId String            @unique
+  delivery   ScheduledDelivery @relation(fields: [deliveryId], references: [id])
+  status     String            @default("unprepared")
+  packedBy   String            @default("")
+  packedAt   DateTime?
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actor     String
+  action    String
+  entity    String
+  entityId  String
+  detail    String   @default("")
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+}
+
+model SheetsSyncLog {
+  id        String   @id @default(cuid())
+  direction String
+  entity    String
+  status    String
+  detail    String   @default("")
+  createdAt DateTime @default(now())
+}
+
+model IdempotencyRecord {
+  key       String   @id
+  response  String
+  createdAt DateTime @default(now())
+}
+
+model DataRequest {
+  id         String    @id @default(cuid())
+  customerId String?
+  customer   Customer? @relation(fields: [customerId], references: [id])
+  phone      String
+  type       String
+  status     String    @default("requested")
+  notes      String    @default("")
+  createdAt  DateTime  @default(now())
+}
+
+model ChangeRequest {
+  id         String   @id @default(cuid())
+  orderId    String
+  order      Order    @relation(fields: [orderId], references: [id])
+  deliveryId String   @default("")
+  type       String
+  message    String
+  status     String   @default("pending")
+  createdAt  DateTime @default(now())
+}

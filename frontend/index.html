@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Morning - Diet Food & Monthly Meal Plan</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN for instant styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: '#1C3822',
+              'primary-light': '#2D5A37',
+              leaf: '#388E3C',
+              cream: '#FAF8F3',
+              sage: '#EBF1E5',
+            },
+            fontFamily: {
+              serif: ['"Playfair Display"', 'Georgia', 'serif'],
+              sans: ['Outfit', 'sans-serif'],
+            }
+          }
+        }
+      }
+    </script>
+  </head>
+  <body class="bg-[#F5F7F2] text-slate-900 font-sans">
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

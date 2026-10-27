@@ -1,0 +1,13 @@
+node_modules
+.next
+dist
+.env
+*.db
+*.db-journal
+prisma/integration.db
+prisma/integration.db-journal
+coverage
+.DS_Store
+tsconfig.tsbuildinfo
+*.db-wal
+*.db-shm
