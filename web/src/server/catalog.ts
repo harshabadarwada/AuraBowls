@@ -36,6 +36,14 @@ export type PublicMeal = {
   addons: { id: string; name: string; description: string; pricePaise: number }[];
 };
 
+const catalogImages = new Map(catalog.filter((meal) => meal.image.startsWith("/")).map((meal) => [meal.slug, meal.image]));
+
+export function mealImage(meal: { slug: string; imageUrl: string; imageIsPlaceholder: boolean }) {
+  const local = catalogImages.get(meal.slug);
+  if (local && (!meal.imageUrl || meal.imageUrl.includes("images.unsplash.com"))) return { imageUrl: local, imageIsPlaceholder: false };
+  return { imageUrl: meal.imageUrl, imageIsPlaceholder: meal.imageIsPlaceholder };
+}
+
 function publishedCatalog(mealType?: string): PublicMeal[] {
   const names = new Map<string, string>(categories.map((item) => [item[0], item[1]]));
   const order = new Map<string, number>(categories.map((item) => [item[0], item[4]]));
@@ -102,8 +110,7 @@ export async function listMeals(mealType?: string): Promise<PublicMeal[]> {
     ingredients: meal.ingredients,
     allergens: meal.allergens,
     allergenVerified: meal.allergenVerified,
-    imageUrl: meal.imageUrl,
-    imageIsPlaceholder: meal.imageIsPlaceholder,
+    ...mealImage(meal),
     available: meal.available,
     isPopular: meal.isPopular,
     nutritionStatus: meal.nutritionStatus,

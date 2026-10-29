@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { dietLabel, formatInr } from "@/lib/format";
 import type { PublicMeal } from "@/server/catalog";
+import { DishArt } from "@/components/dish-art";
 
 export function BowlTile({ meal, quantity, onAdd, onLess }: { meal: PublicMeal; quantity: number; onAdd: () => void; onLess: () => void }) {
   const diet = meal.dietTags.map(dietLabel).join(" · ") || meal.mealType;
   return (
-    <article className="flex h-full overflow-hidden rounded-[24px] bg-white shadow-[0_14px_32px_rgba(26,74,22,0.06)] max-sm:items-stretch sm:flex-col">
-      <Link href={`/meals/${meal.slug}`} className="plate block h-28 w-28 shrink-0 bg-[#EAF6DC] sm:aspect-square sm:h-auto sm:w-full">
-        {meal.imageUrl ? <img src={meal.imageUrl} alt="" /> : null}
+    <article className="group flex h-full overflow-hidden rounded-[24px] bg-white shadow-[0_14px_32px_rgba(26,74,22,0.06)] ring-1 ring-[#EAE4DD]/70 max-sm:items-center sm:flex-col">
+      <Link href={`/meals/${meal.slug}`} className="m-2 block shrink-0 sm:m-0" aria-label={meal.name}>
+        <DishArt meal={meal} className="aspect-square w-28 rounded-[18px] sm:w-full sm:rounded-none" />
       </Link>
       <div className="flex min-w-0 flex-1 flex-col justify-between p-3 sm:p-4">
         <div>

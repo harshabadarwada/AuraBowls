@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
+import { Signature } from "@/components/signature";
 
 export function Logo({ light = false }: { light?: boolean }) {
   return (
@@ -198,41 +199,52 @@ export function MobileNav() {
   );
 }
 
+function FooterLinks({ title, links }: { title: string; links: [string, string][] }) {
+  return (
+    <div>
+      <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/60">{title}</h2>
+      <ul className="mt-3 space-y-1 text-sm">
+        {links.map(([href, label]) => (
+          <li key={href}>
+            <Link href={href} className="inline-flex min-h-9 items-center text-[#EAF6DC] transition hover:text-white motion-reduce:transition-none">{label}</Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 export function Footer({ whatsapp }: { whatsapp: string }) {
   return (
-    <footer className="mt-20 bg-[#1A4A16] text-[#EAF6DC]">
-      <div className="mx-auto grid max-w-7xl gap-8 px-5 py-14 sm:grid-cols-2 sm:px-8 lg:grid-cols-4">
+    <footer className="relative mt-20 overflow-hidden bg-[#10291D] text-[#EAF6DC]">
+      <span aria-hidden="true" className="pointer-events-none absolute -right-24 -top-32 h-80 w-80 rounded-full bg-[radial-gradient(closest-side,rgba(241,92,0,0.18),rgba(241,92,0,0))]" />
+      <div className="relative mx-auto grid max-w-7xl gap-10 px-5 pb-10 pt-12 sm:px-8 sm:pt-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:gap-16">
         <div>
           <Logo light />
-          <p className="mt-4 max-w-xs text-sm leading-6 text-[#d5e4d8]">Fresh, balanced meals for everyday living. Breakfast and lunch, on a schedule you choose.</p>
+          <p className="mt-5 max-w-xs text-sm leading-6 text-[#d5e4d8]">Fresh, balanced meals for everyday living. Breakfast and lunch, on a schedule you choose.</p>
         </div>
-        <div>
-          <h2 className="text-sm font-semibold text-white">Order</h2>
-          <ul className="mt-3 space-y-2 text-sm">
-            <li><Link href="/menu">Menu</Link></li>
-            <li><Link href="/plans">Meal plans</Link></li>
-            <li><Link href="/cart">Cart</Link></li>
-            <li><Link href="/track">Track an order</Link></li>
-          </ul>
+        <div className="grid grid-cols-2 gap-x-6 gap-y-10 lg:grid-cols-3">
+          <FooterLinks title="Order" links={[["/menu", "Menu"], ["/plans", "Meal plans"], ["/cart", "Cart"], ["/track", "Track an order"]]} />
+          <FooterLinks title="Policies" links={[["/privacy", "Privacy"], ["/terms", "Terms"], ["/refund-policy", "Cancellation and refunds"], ["/about", "About"]]} />
+          <div className="col-span-2 rounded-[22px] bg-white/[0.06] p-5 ring-1 ring-white/10 lg:col-span-1 lg:bg-transparent lg:p-0 lg:ring-0">
+            <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/60">Support</h2>
+            <p className="mt-3 text-sm leading-6 text-[#d5e4d8]">WhatsApp is the support channel. Opening it does not send a message by itself.</p>
+            {whatsapp ? (
+              <a
+                className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-full bg-[#F15C00] px-5 text-sm font-semibold text-white transition hover:bg-[#d44e00] motion-reduce:transition-none"
+                href={`https://wa.me/${whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent("Hello AuraBowls, I need help with an order.")}`}
+              >
+                Message on WhatsApp
+              </a>
+            ) : (
+              <p className="mt-3 text-sm">WhatsApp support is not configured yet. Add the number in admin settings.</p>
+            )}
+          </div>
         </div>
-        <div>
-          <h2 className="text-sm font-semibold text-white">Policies</h2>
-          <ul className="mt-3 space-y-2 text-sm">
-            <li><Link href="/privacy">Privacy</Link></li>
-            <li><Link href="/terms">Terms</Link></li>
-            <li><Link href="/refund-policy">Cancellation and refunds</Link></li>
-            <li><Link href="/about">About</Link></li>
-          </ul>
-        </div>
-        <div>
-          <h2 className="text-sm font-semibold text-white">Support</h2>
-          <p className="mt-3 text-sm leading-6">WhatsApp is the support channel. Opening it does not send a message by itself.</p>
-          {whatsapp ? (
-            <a className="mt-3 inline-block text-sm text-[#F15C00]" href={`https://wa.me/${whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent("Hello AuraBowls, I need help with an order.")}`}>Message on WhatsApp</a>
-          ) : (
-            <p className="mt-3 text-sm">WhatsApp support is not configured yet. Add the number in admin settings.</p>
-          )}
-        </div>
+      </div>
+      <div className="relative mx-auto flex max-w-7xl flex-col-reverse items-center gap-5 border-t border-white/10 px-5 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-6 sm:flex-row sm:justify-between sm:px-8 md:pb-8">
+        <p className="text-xs text-white/55">© AuraBowls</p>
+        <Signature />
       </div>
     </footer>
   );

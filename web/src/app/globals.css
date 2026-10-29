@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant wide (@media (min-width: 48rem) and (min-aspect-ratio: 1/1));
+
 @theme {
   --color-forest: #1a4a16;
   --color-accent: #f15c00;
@@ -145,6 +147,16 @@ table.admin th { color: #6a5a4e; font-weight: 650; font-size: 0.75rem; letter-sp
 @keyframes drift-in { from { opacity: 0; transform: translate(var(--x, 0), var(--y, 12px)) scale(.86); } to { opacity: 1; transform: none; } }
 @keyframes floaty { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
 @keyframes check-in { from { opacity: 0; transform: scale(.72); } to { opacity: 1; transform: none; } }
+@keyframes ingredient-drift {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
+  50% { transform: translate3d(0, var(--lift, -12px), 0) rotate(var(--spin, 8deg)) scale(1.04); }
+}
+.ingredient-drift { animation: ingredient-drift var(--dur, 9s) ease-in-out var(--delay, 0s) infinite; will-change: transform; }
+.film-grain {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+}
+.outline-word { color: transparent; -webkit-text-stroke: 1px rgba(255, 248, 242, 0.09); }
 .plan-photo { box-shadow: 0 22px 40px rgba(26, 74, 22, 0.16), 0 2px 0 rgba(255, 255, 255, 0.6) inset; }
 .plan-photo img, .store-card .relative > img, .plate img { width: 100%; height: 100%; max-width: none; object-fit: cover; }
 .plan-card { background: linear-gradient(180deg, rgba(255,255,255,0.96), #fff 42%); }
@@ -156,7 +168,7 @@ table.admin th { color: #6a5a4e; font-weight: 650; font-size: 0.75rem; letter-sp
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .btn, .store-card, .store-card img, .nav-bowl { transition: none; }
-  .page-enter, .hero-light, .hero-line, .hero-bowl, .float-bit, .bowl-rest, .story, .pay-check { animation: none; }
+  .page-enter, .hero-light, .hero-line, .hero-bowl, .float-bit, .bowl-rest, .story, .pay-check, .ingredient-drift { animation: none; }
   .cal-day { transition: none; }
 }
 @media print {

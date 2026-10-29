@@ -1,4 +1,5 @@
 import { formatInr } from "@/lib/format";
+import { BASE_BOWL_PAISE, PORTION_PAISE, describeCustomBowl, type CustomBowl } from "@/lib/custom-bowl";
 
 type Line = {
   date: string;
@@ -196,6 +197,26 @@ export function menuOrderText(input: { name: string; address: string; pin: strin
     `Menu total: ${formatInr(total)}`,
     deliveryChargeNote,
     "I will pay after you send the QR.",
+  ].join("\n");
+}
+
+export function customBowlText(input: { name: string; address: string; pin: string; bowl: CustomBowl }) {
+  if (input.pin.trim() !== "500081") return outsideAreaText(input);
+  const { priced, lines } = describeCustomBowl(input.bowl);
+  return [
+    ...identity(input),
+    "",
+    "I want to order a custom bowl. Please send the payment QR on this chat. I have not paid yet.",
+    "",
+    ...lines,
+    "",
+    `Base bowl: ${formatInr(BASE_BOWL_PAISE)}`,
+    `Protein (${priced.portions} × ${formatInr(PORTION_PAISE)}): ${formatInr(priced.proteinPaise)}`,
+    ...priced.extras.map((item) => `${item.name}: ${formatInr(item.pricePaise || 0)}`),
+    `Per bowl: ${formatInr(priced.bowlPaise)}`,
+    `Bowls: ${priced.quantity}`,
+    `Total: ${formatInr(priced.totalPaise)}`,
+    deliveryChargeNote,
   ].join("\n");
 }
 

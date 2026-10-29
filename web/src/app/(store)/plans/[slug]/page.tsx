@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { PlanBuilder } from "@/components/plan-builder";
 import { db } from "@/lib/db";
 import { businessWhatsapp } from "@/lib/order-message";
-import { getSettings, listMeals, type PublicMeal } from "@/server/catalog";
+import { getSettings, listMeals, mealImage, type PublicMeal } from "@/server/catalog";
 import { planMealsFromPaise, publishedPlan, publishedPlans, publishedSlots, type PublishedPlan } from "@/server/published-plans";
 
 const scopes = ["breakfast", "lunch", "both"] as const;
@@ -80,7 +80,7 @@ async function loadPlan(slug: string, meals: PublicMeal[]) {
     const priceBySlug = new Map(meals.map((meal) => [meal.slug, meal]));
     for (const meal of defaults) {
       const current = priceBySlug.get(meal.slug);
-      if (current) priceBySlug.set(meal.slug, { ...current, pricePaise: meal.pricePaise, imageUrl: meal.imageUrl, imageIsPlaceholder: meal.imageIsPlaceholder });
+      if (current) priceBySlug.set(meal.slug, { ...current, pricePaise: meal.pricePaise, ...mealImage(meal) });
     }
     const published = templates.flatMap((item) => {
       if (!scopes.includes(item.mealType as (typeof scopes)[number]) || !cadences.includes(item.cadence as (typeof cadences)[number])) return [];

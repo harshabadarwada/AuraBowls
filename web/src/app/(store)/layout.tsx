@@ -9,7 +9,7 @@ export default async function StoreLayout({ children }: { children: React.ReactN
   return (
     <>
       <Header />
-      <main id="content" className="mx-auto min-h-[70vh] min-w-0 max-w-7xl overflow-x-clip px-5 py-8 pb-24 sm:px-8 md:pb-16">{children}</main>
+      <main id="content" className="mx-auto min-h-[70vh] min-w-0 max-w-7xl overflow-x-clip has-[[data-full-bleed]]:overflow-x-visible px-5 py-8 pb-24 sm:px-8 md:pb-16">{children}</main>
       <Footer whatsapp={businessWhatsapp(settings?.supportWhatsapp || "")} />
       <MobileNav />
     </>
