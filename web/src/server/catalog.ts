@@ -58,7 +58,7 @@ function publishedCatalog(mealType?: string): PublicMeal[] {
       allergens: "",
       allergenVerified: false,
       imageUrl: meal.image,
-      imageIsPlaceholder: true,
+      imageIsPlaceholder: !meal.image.startsWith("/"),
       available: true,
       isPopular: false,
       nutritionStatus: "missing",

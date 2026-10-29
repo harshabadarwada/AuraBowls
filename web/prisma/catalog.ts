@@ -21,6 +21,39 @@ const photo = {
   bite: "https://images.unsplash.com/photo-1529042410759-befb1204b468?auto=format&fit=crop&w=1200&q=80",
 };
 
+const pictured = new Set([
+  "fiery-peri-chicken-bowl",
+  "seoul-crunch-chicken-bowl",
+  "smoky-bbq-chicken-bowl",
+  "mediterranean-chicken-bowl",
+  "paneer-power-bowl",
+  "pepper-mushroom-bowl",
+  "soya-crunch-power-bowl",
+  "asian-sesame-veg-bowl",
+  "tofu-power-bowl",
+  "falafel-hummus-bowl",
+  "sweet-potato-power-bowl",
+  "protein-punch-egg-bowl",
+  "masala-egg-power-bowl",
+  "korean-fried-chicken-biryani-bowl",
+  "tandoori-chicken-biryani-bowl",
+  "paneer-biryani-bowl",
+  "soya-biryani-bowl",
+  "mushroom-biryani-bowl",
+  "mixed-veg-biryani-bowl",
+  "egg-biryani-bowl",
+  "mango-coconut-overnight-oats",
+  "strawberry-cream-oats",
+  "choco-banana-protein-oats",
+  "apple-cinnamon-oats",
+  "dates-almond-energy-oats",
+  "pomegranate-overnight-oats",
+  "kiwi-overnight-oats",
+  "mediterranean-breakfast-salad",
+  "egg-avocado-breakfast-salad",
+  "mango-crunch-breakfast-salad",
+]);
+
 function row(slug: string, name: string, ingredients: string, price: number, type: CatalogMeal["type"], category: string, image: string, portion: string, compareAt = 0, diet?: CatalogMeal["diet"]): CatalogMeal {
   return {
     slug,
@@ -33,7 +66,7 @@ function row(slug: string, name: string, ingredients: string, price: number, typ
     type,
     category,
     portion,
-    image,
+    image: pictured.has(slug) ? `/bowls/${slug}.jpg` : image,
   };
 }
 

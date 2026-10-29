@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { readDraft, readMenu, readPerson, SERVED_PIN, writeMenu, writePerson, type MenuLine } from "@/components/draft";
+import { catalog } from "../../prisma/catalog";
 import { formatInr } from "@/lib/format";
 import { menuOrderText, whatsappHref } from "@/lib/order-message";
 
@@ -69,6 +70,7 @@ export function MenuCart({ whatsapp }: { whatsapp: string }) {
         <ul className="mt-6 overflow-hidden rounded-[20px] border border-[#EAE4DD] bg-white">
           {lines.map((line) => (
             <li key={line.slug} className="flex flex-wrap items-center gap-3 border-b border-[#EAE4DD] p-4 last:border-b-0">
+              {catalog.find((meal) => meal.slug === line.slug)?.image.startsWith("/") ? <img src={`/bowls/${line.slug}.jpg`} alt="" className="h-16 w-16 shrink-0 rounded-2xl object-cover" /> : null}
               <div className="min-w-0 flex-1 basis-36">
                 <p className="font-semibold text-[#1A4A16]">{line.name}</p>
                 <p className="text-xs capitalize text-[#6A5A4E]">{line.mealType}</p>
