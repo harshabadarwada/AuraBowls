@@ -67,4 +67,31 @@ describe("WhatsApp identity", () => {
     expect(text).toContain("PIN: 500081");
     expect(text.indexOf("Name:")).toBeLessThan(text.indexOf("Subscription:"));
   });
+
+  it("lists a different bowl on each selected day", () => {
+    const text = guideOrderText({
+      name: "Meera Rao",
+      address: "Flat 12, Madhapur",
+      pin: "500081",
+      goalLabel: "Fat loss",
+      lines: [],
+      days: [
+        { date: "2026-11-02", note: "our recommendation", items: [{ mealLabel: "Breakfast", name: "Mango Coconut Overnight Oats", pricePaise: 22000 }] },
+        { date: "2026-11-03", note: "your choice", items: [{ mealLabel: "Breakfast", name: "Apple Cinnamon Oats", pricePaise: 22000 }] },
+      ],
+      subscription: {
+        days: 2,
+        lengthLabel: "5 weekdays",
+        mealsLabel: "Breakfast",
+        startDate: "2026-11-02",
+        slots: ["Breakfast 7:30–9:00"],
+        discountBps: 500,
+      },
+    });
+    expect(text).toContain("Mon, 2 Nov (our recommendation)");
+    expect(text).toContain("Breakfast: Apple Cinnamon Oats");
+    expect(text).toContain("Meals total: ₹440.00");
+    expect(text).toContain("Total: ₹418.00");
+    expect(text.indexOf("Name:")).toBeLessThan(text.indexOf("Each day:"));
+  });
 });

@@ -132,6 +132,7 @@ export function guideOrderText(input: {
   goalLabel: string;
   lines: { name: string; quantity: number; pricePaise: number }[];
   body?: string[];
+  days?: { date: string; note: string; items: { mealLabel: string; name: string; pricePaise: number }[] }[];
   subscription?: {
     days: number;
     lengthLabel: string;
@@ -142,7 +143,13 @@ export function guideOrderText(input: {
   };
 }) {
   const perDay = input.lines.reduce((sum, line) => sum + line.pricePaise * line.quantity, 0);
-  const priced = input.subscription ? subscriptionTotal(perDay, input.subscription.days, input.subscription.discountBps) : null;
+  const dayItems = input.days?.flatMap((day) => day.items) || [];
+  const dayReference = dayItems.reduce((sum, item) => sum + item.pricePaise, 0);
+  const priced = input.subscription
+    ? dayItems.length
+      ? subscriptionTotal(dayReference, 1, input.subscription.discountBps)
+      : subscriptionTotal(perDay, input.subscription.days, input.subscription.discountBps)
+    : null;
   const plan = input.subscription ? [
     `Subscription: ${input.subscription.lengthLabel}`,
     `Meals: ${input.subscription.mealsLabel}`,
@@ -158,11 +165,17 @@ export function guideOrderText(input: {
     ...(input.body?.length ? [""] : []),
     ...plan,
     ...(plan.length ? [""] : []),
-    input.lines.length ? "Bowls each day:" : "Bowls: none added yet",
-    ...input.lines.map((line) => `${line.quantity} × ${line.name} — ${formatInr(line.pricePaise * line.quantity)}`),
+    input.days?.length ? "Each day:" : input.lines.length ? "Bowls each day:" : "Bowls: none added yet",
+    ...(input.days?.length
+      ? input.days.flatMap((day) => [
+        `${dayLabel(day.date)}${day.note ? ` (${day.note})` : ""}`,
+        ...day.items.map((item) => `${item.mealLabel}: ${item.name} — ${formatInr(item.pricePaise)}`),
+      ])
+      : input.lines.map((line) => `${line.quantity} × ${line.name} — ${formatInr(line.pricePaise * line.quantity)}`)),
     "",
-    priced ? `Per day: ${formatInr(priced.perDayPaise)}` : undefined,
-    priced && input.subscription ? `${input.subscription.days} days: ${formatInr(priced.referencePaise)}` : undefined,
+    priced && !dayItems.length ? `Per day: ${formatInr(priced.perDayPaise)}` : undefined,
+    priced && input.subscription && !dayItems.length ? `${input.subscription.days} days: ${formatInr(priced.referencePaise)}` : undefined,
+    priced && dayItems.length ? `Meals total: ${formatInr(priced.referencePaise)}` : undefined,
     priced && priced.discountPaise > 0 ? `Plan discount: -${formatInr(priced.discountPaise)}` : undefined,
     priced ? `Total: ${formatInr(priced.totalPaise)}` : input.lines.length ? `Menu total: ${formatInr(perDay)}` : undefined,
     deliveryChargeNote,

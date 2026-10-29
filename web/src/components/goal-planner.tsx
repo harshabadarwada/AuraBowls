@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { addMenuLine, readMenu, readPerson, SERVED_PIN, writeMenu, writePerson, type MenuLine } from "@/components/draft";
+import { readPerson, SERVED_PIN, writePerson } from "@/components/draft";
 import { BowlTile } from "@/components/bowl-tile";
 import { formatInr } from "@/lib/format";
 import { bodyMassIndex, bodyMassLabel, suggestIntake, type Activity, type BodyGoal, type Sex } from "@/lib/guidance";
@@ -43,6 +43,41 @@ function kolkataTomorrow() {
   return new Date(Date.UTC(year, month - 1, day + 1)).toISOString().slice(0, 10);
 }
 
+function addIsoDays(iso: string, count: number) {
+  const [year, month, day] = iso.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day + count)).toISOString().slice(0, 10);
+}
+
+function weekdayNumber(iso: string) {
+  const [year, month, day] = iso.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day)).getUTCDay();
+}
+
+function planDates(start: string, count: number, weekdaysOnly: boolean) {
+  const dates: string[] = [];
+  let cursor = start;
+  for (let step = 0; step < 90 && dates.length < count; step += 1) {
+    const weekday = weekdayNumber(cursor);
+    if (!weekdaysOnly || (weekday !== 0 && weekday !== 6)) dates.push(cursor);
+    cursor = addIsoDays(cursor, 1);
+  }
+  return dates;
+}
+
+function dayBits(iso: string) {
+  const [year, month, day] = iso.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return {
+    weekday: date.toLocaleDateString("en-IN", { weekday: "short", timeZone: "UTC" }),
+    day: String(day),
+  };
+}
+
+const breakfastRotation = ["mango-coconut-overnight-oats", "apple-cinnamon-oats", "kiwi-overnight-oats", "mediterranean-breakfast-salad", "pomegranate-overnight-oats", "mango-crunch-breakfast-salad", "strawberry-cream-oats", "dates-almond-energy-oats", "choco-banana-protein-oats", "egg-avocado-breakfast-salad"];
+const lunchRotation = ["paneer-power-bowl", "tofu-power-bowl", "falafel-hummus-bowl", "sweet-potato-power-bowl", "mixed-veg-biryani-bowl", "mediterranean-chicken-bowl", "paneer-biryani-bowl", "egg-biryani-bowl", "pepper-mushroom-bowl", "asian-sesame-veg-bowl"];
+
+type DayPick = { date: string; breakfast: string; lunch: string; source: "" | "recommendation" | "yours" };
+
 export function GoalPlanner({ meals, whatsapp }: { meals: PublicMeal[]; whatsapp: string }) {
   const [goal, setGoal] = useState<BodyGoal | "">("");
   const [step, setStep] = useState<"place" | "goal" | "measure" | "name" | "subscription" | "bowls">("place");
@@ -64,9 +99,10 @@ export function GoalPlanner({ meals, whatsapp }: { meals: PublicMeal[]; whatsapp
   const [error, setError] = useState("");
   const [askSend, setAskSend] = useState(false);
   const [confirmPin, setConfirmPin] = useState("");
-  const [basket, setBasket] = useState<MenuLine[]>([]);
+  const [days, setDays] = useState<DayPick[]>([]);
+  const [activeDate, setActiveDate] = useState("");
+  const [picking, setPicking] = useState<"breakfast" | "lunch">("breakfast");
   useEffect(() => {
-    setBasket(readMenu());
     const person = readPerson();
     setName(person.name);
     setAddress(person.address);
@@ -86,12 +122,13 @@ export function GoalPlanner({ meals, whatsapp }: { meals: PublicMeal[]; whatsapp
 
   const length = lengths.find((item) => item.id === lengthId) || lengths[1];
   const mealsLabel = mealChoices.find((item) => item[0] === mealsChoice)?.[1] || "Breakfast";
-  const lines = basket.filter((line) => mealsChoice === "both" ? line.mealType === "breakfast" || line.mealType === "lunch" : line.mealType === mealsChoice);
-  const hasBreakfast = lines.some((line) => line.mealType === "breakfast");
-  const hasLunch = lines.some((line) => line.mealType === "lunch");
-  const bowlsReady = mealsChoice === "both" ? hasBreakfast && hasLunch : lines.length > 0;
-  const perDay = lines.reduce((sum, line) => sum + line.pricePaise * line.quantity, 0);
-  const priced = subscriptionTotal(perDay, length.days, length.discountBps);
+  const mealBySlug = useMemo(() => new Map(meals.map((meal) => [meal.slug, meal])), [meals]);
+  const needsBreakfast = mealsChoice !== "lunch";
+  const needsLunch = mealsChoice !== "breakfast";
+  const bowlsReady = days.length === length.days && days.every((day) => (!needsBreakfast || day.breakfast) && (!needsLunch || day.lunch));
+  const chosenMeals = days.flatMap((day) => [needsBreakfast ? mealBySlug.get(day.breakfast) : undefined, needsLunch ? mealBySlug.get(day.lunch) : undefined].filter((meal): meal is PublicMeal => Boolean(meal)));
+  const mealsTotal = chosenMeals.reduce((sum, meal) => sum + meal.pricePaise, 0);
+  const priced = subscriptionTotal(mealsTotal, 1, length.discountBps);
   const slots = [
     mealsChoice !== "lunch" ? `Breakfast ${morningSlot}` : "",
     mealsChoice !== "breakfast" ? `Lunch ${afternoonSlot}` : "",
@@ -119,7 +156,15 @@ export function GoalPlanner({ meals, whatsapp }: { meals: PublicMeal[]; whatsapp
     ...confirmPerson,
     goalLabel,
     body: bodyLines,
-    lines: lines.map((line) => ({ name: line.name, quantity: line.quantity, pricePaise: line.pricePaise })),
+    lines: [],
+    days: days.map((day) => ({
+      date: day.date,
+      note: day.source === "recommendation" ? "our recommendation" : day.source === "yours" ? "your choice" : "",
+      items: [
+        needsBreakfast && mealBySlug.get(day.breakfast) ? { mealLabel: "Breakfast", name: mealBySlug.get(day.breakfast)!.name, pricePaise: mealBySlug.get(day.breakfast)!.pricePaise } : null,
+        needsLunch && mealBySlug.get(day.lunch) ? { mealLabel: "Lunch", name: mealBySlug.get(day.lunch)!.name, pricePaise: mealBySlug.get(day.lunch)!.pricePaise } : null,
+      ].filter((item): item is { mealLabel: string; name: string; pricePaise: number } => Boolean(item)),
+    })),
     subscription: { days: length.days, lengthLabel: length.label, mealsLabel, startDate, slots, discountBps: length.discountBps },
   });
   const href = sendReady && bowlsReady ? whatsappHref(whatsapp, sendOutside ? outsideAreaText(confirmPerson) : orderText) : "";
@@ -153,18 +198,43 @@ export function GoalPlanner({ meals, whatsapp }: { meals: PublicMeal[]; whatsapp
     setStep("name");
   }
 
-  function add(meal: PublicMeal) {
-    addMenuLine({ slug: meal.slug, name: meal.name, pricePaise: meal.pricePaise, mealType: meal.mealType });
-    setBasket(readMenu());
+  function openDays() {
+    const dates = planDates(startDate, length.days, length.id !== "daily");
+    setDays(dates.map((date) => ({ date, breakfast: "", lunch: "", source: "" })));
+    setActiveDate(dates[0] || "");
+    setPicking(mealsChoice === "lunch" ? "lunch" : "breakfast");
+    setStep("bowls");
   }
 
-  function less(slug: string) {
-    const next = readMenu().map((line) => line.slug === slug ? { ...line, quantity: line.quantity - 1 } : line).filter((line) => line.quantity > 0);
-    writeMenu(next);
-    setBasket(next);
+  function recommend() {
+    const breakfasts = breakfastRotation.map((slug) => mealBySlug.get(slug)).filter((meal): meal is PublicMeal => Boolean(meal));
+    const lunches = lunchRotation.map((slug) => mealBySlug.get(slug)).filter((meal): meal is PublicMeal => Boolean(meal));
+    setDays((current) => current.map((day, index) => ({
+      date: day.date,
+      breakfast: needsBreakfast ? breakfasts[index % Math.max(breakfasts.length, 1)]?.slug || "" : "",
+      lunch: needsLunch ? lunches[index % Math.max(lunches.length, 1)]?.slug || "" : "",
+      source: "recommendation",
+    })));
   }
 
-  const bowls = meals.filter((meal) => meal.categorySlug !== "wellness-shots" && meal.categorySlug !== "fresh-sips");
+  function pickMeal(meal: PublicMeal) {
+    setDays((current) => current.map((day) => {
+      if (day.date !== activeDate) return day;
+      const next = { ...day, source: "yours" as const };
+      if (meal.mealType === "breakfast") next.breakfast = meal.slug;
+      if (meal.mealType === "lunch") next.lunch = meal.slug;
+      return next;
+    }));
+    if (mealsChoice === "both" && meal.mealType === "breakfast") setPicking("lunch");
+  }
+
+  function clearMeal(mealType: "breakfast" | "lunch") {
+    setDays((current) => current.map((day) => day.date === activeDate ? { ...day, [mealType]: "", source: "yours" } : day));
+  }
+
+  const bowls = meals.filter((meal) => meal.categorySlug !== "wellness-shots" && meal.categorySlug !== "fresh-sips" && meal.mealType === picking);
+  const active = days.find((day) => day.date === activeDate);
+  const filled = days.filter((day) => (!needsBreakfast || day.breakfast) && (!needsLunch || day.lunch)).length;
 
   return (
     <div className="mx-auto max-w-5xl pb-28">
@@ -264,7 +334,7 @@ export function GoalPlanner({ meals, whatsapp }: { meals: PublicMeal[]; whatsapp
         <section className="mx-auto max-w-xl">
           <button type="button" className="text-sm font-semibold text-[#1A4A16]" onClick={() => setStep("name")}>Back</button>
           <h1 className="display mt-3 text-4xl text-[#1A4A16]">How long, and which meals?</h1>
-          <p className="mt-3 text-sm leading-6 text-[#6A5A4E]">Same lengths as the prepaid plans. The discount is on the bowls you pick, for every day in the subscription.</p>
+          <p className="mt-3 text-sm leading-6 text-[#6A5A4E]">After this, each day gets its own bowl. You can take our recommendation or choose the food yourself.</p>
           <div className="mt-6 grid gap-3">
             {lengths.map((item) => (
               <button key={item.id} type="button" className={`rounded-[24px] p-4 text-left ${lengthId === item.id ? "bg-[#1A4A16] text-white" : "bg-white text-[#1A4A16]"}`} onClick={() => setLengthId(item.id)}>
@@ -299,19 +369,47 @@ export function GoalPlanner({ meals, whatsapp }: { meals: PublicMeal[]; whatsapp
           ) : null}
           <p className="mt-5 text-sm leading-6 text-[#6A5A4E]">{length.label} · {mealsLabel} · starts {startDate} · {slots.join(" · ")}</p>
           <p className="mt-2 text-sm leading-6 text-[#6A5A4E]">Delivery charges vary by location and are not included in the bowl total.</p>
-          <button className="btn btn-accent mt-4" type="button" disabled={!/^\d{4}-\d{2}-\d{2}$/.test(startDate)} onClick={() => setStep("bowls")}>Choose bowls</button>
+          <button className="btn btn-accent mt-4" type="button" disabled={!/^\d{4}-\d{2}-\d{2}$/.test(startDate)} onClick={openDays}>Choose each day</button>
         </section>
       ) : null}
 
       {step === "bowls" ? (
         <section>
           <button type="button" className="text-sm font-semibold text-[#1A4A16]" onClick={() => setStep("subscription")}>Back</button>
-          <h1 className="display mt-3 text-4xl text-[#1A4A16]">Add the bowls, {name.trim()}.</h1>
-          <p className="mt-3 max-w-xl text-sm leading-6 text-[#6A5A4E]">{length.label} of {mealsLabel.toLowerCase()}. {slots.join(" · ")}. Your name, address{estimate?.ok ? ", measurements, and the calorie estimate" : ""} go in the same WhatsApp message.</p>
-          <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
-            {bowls.filter((meal) => mealsChoice === "both" ? meal.mealType === "breakfast" || meal.mealType === "lunch" : meal.mealType === mealsChoice).map((meal) => {
-              const line = basket.find((item) => item.slug === meal.slug);
-              return <BowlTile key={meal.slug} meal={meal} quantity={line?.quantity || 0} onAdd={() => add(meal)} onLess={() => less(meal.slug)} />;
+          <h1 className="display mt-3 text-4xl text-[#1A4A16]">A bowl for each day.</h1>
+          <p className="mt-3 max-w-xl text-sm leading-6 text-[#6A5A4E]">{length.label} of {mealsLabel.toLowerCase()}. {filled} of {days.length} days are filled. Our recommendation is a kitchen rotation, not a claim that the bowls match the calorie estimate.</p>
+          <div className="mt-5 flex flex-wrap gap-2">
+            <button type="button" className="btn btn-forest" onClick={recommend}>Use our recommendation</button>
+            <button type="button" className="btn btn-line" onClick={() => setDays((current) => current.map((day) => ({ ...day, breakfast: "", lunch: "", source: "" })))}>Clear and choose myself</button>
+          </div>
+          <div className="mt-5 flex gap-2 overflow-x-auto pb-2" aria-label="Delivery days">
+            {days.map((day) => {
+              const ready = (!needsBreakfast || day.breakfast) && (!needsLunch || day.lunch);
+              const on = day.date === activeDate;
+              return (
+                <button key={day.date} type="button" className={`min-w-16 rounded-full px-3 py-2 text-center ${on ? "bg-[#1A4A16] text-white" : "bg-white text-[#1A4A16]"}`} onClick={() => setActiveDate(day.date)}>
+                  <span className="block text-[10px] font-semibold uppercase tracking-wide">{dayBits(day.date).weekday}</span>
+                  <span className="text-lg font-semibold">{dayBits(day.date).day}</span>
+                  <span className="block text-[10px]">{ready ? "Set" : "Pick"}</span>
+                </button>
+              );
+            })}
+          </div>
+          {mealsChoice === "both" ? (
+            <div className="mt-4 flex gap-2">
+              {(["breakfast", "lunch"] as const).map((mealType) => (
+                <button key={mealType} type="button" className={`chip capitalize ${picking === mealType ? "chip-on" : ""}`} onClick={() => setPicking(mealType)}>{mealType}</button>
+              ))}
+            </div>
+          ) : null}
+          <p className="mt-4 text-sm text-[#6A5A4E]">
+            {active ? `${dayBits(active.date).weekday} ${dayBits(active.date).day}: ${picking === "breakfast" ? mealBySlug.get(active.breakfast)?.name || "choose a breakfast" : mealBySlug.get(active.lunch)?.name || "choose a lunch"}` : ""}
+            {active?.source === "recommendation" ? " · our recommendation" : active?.source === "yours" ? " · your choice" : ""}
+          </p>
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
+            {bowls.map((meal) => {
+              const selected = picking === "breakfast" ? active?.breakfast === meal.slug : active?.lunch === meal.slug;
+              return <BowlTile key={meal.slug} meal={meal} quantity={selected ? 1 : 0} onAdd={() => pickMeal(meal)} onLess={() => clearMeal(picking)} />;
             })}
           </div>
           {askSend ? (
@@ -338,8 +436,8 @@ export function GoalPlanner({ meals, whatsapp }: { meals: PublicMeal[]; whatsapp
           ) : (
             <div className="fixed inset-x-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-30 flex items-center justify-between gap-3 rounded-full bg-[#1A4A16] px-4 py-2 text-white md:bottom-6">
               <div>
-                <p className="text-[11px] uppercase tracking-wide text-white/70">{length.label} · {formatInr(priced.totalPaise)} · delivery extra</p>
-                <p className="text-sm">{bowlsReady ? "PIN is checked next" : mealsChoice === "both" ? "Add one breakfast and one lunch" : "Add a bowl"}</p>
+                <p className="text-[11px] uppercase tracking-wide text-white/70">{filled}/{days.length} days · {formatInr(priced.totalPaise)} · delivery extra</p>
+                <p className="text-sm">{bowlsReady ? "PIN is checked next" : "Choose a bowl for each day"}</p>
               </div>
               <button type="button" className="btn btn-accent" disabled={!bowlsReady} onClick={() => setAskSend(true)}>Send on WhatsApp</button>
             </div>
