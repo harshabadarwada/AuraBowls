@@ -74,6 +74,30 @@ function Bag({ count }: { count: number }) {
   );
 }
 
+export function DeliveryNotice() {
+  return (
+    <aside className="caution-tape relative z-40 overflow-hidden text-[#111]" aria-label="Delivery area">
+      <p className="sr-only">Caution: we deliver only in Madhapur and nearby areas, PIN 500081.</p>
+      <div className="caution-track flex w-max py-2" aria-hidden="true">
+        {[0, 1].map((copy) => (
+          <div key={copy} className="flex shrink-0">
+            {[0, 1, 2, 3].map((item) => (
+              <span key={item} className="flex shrink-0 items-center gap-2 px-6 text-[11px] font-extrabold uppercase leading-4 tracking-[0.12em] sm:text-xs">
+                <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0"><path fill="currentColor" d="M12 2 1 21h22L12 2Zm-1 7h2v6h-2V9Zm0 8h2v2h-2v-2Z" /></svg>
+                Caution
+                <span className="mx-1">·</span>
+                We deliver only in Madhapur &amp; nearby areas
+                <span className="mx-1">·</span>
+                PIN 500081
+              </span>
+            ))}
+          </div>
+        ))}
+      </div>
+    </aside>
+  );
+}
+
 export function Header() {
   const path = usePathname();
   const count = useCartCount();

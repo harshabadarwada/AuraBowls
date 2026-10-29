@@ -32,7 +32,7 @@ h1, h2, h3, h4 { font-family: var(--font-sans), sans-serif; letter-spacing: -0.0
 .display { font-family: var(--font-display), serif; font-weight: 400; letter-spacing: -0.02em; }
 :focus-visible { outline: 2px solid #1a4a16; outline-offset: 3px; }
 .skip-link {
-  position: absolute; left: 1rem; top: -4rem; background: #fff; padding: 0.5rem 0.8rem; z-index: 80;
+  position: absolute; left: 1rem; top: -10rem; background: #fff; padding: 0.5rem 0.8rem; z-index: 80;
 }
 .skip-link:focus { top: 1rem; }
 
@@ -152,6 +152,34 @@ table.admin th { color: #6a5a4e; font-weight: 650; font-size: 0.75rem; letter-sp
   50% { transform: translate3d(0, var(--lift, -12px), 0) rotate(var(--spin, 8deg)) scale(1.04); }
 }
 .ingredient-drift { animation: ingredient-drift var(--dur, 9s) ease-in-out var(--delay, 0s) infinite; will-change: transform; }
+.caution-tape {
+  background-color: #FFD400;
+  padding-block: 7px;
+  box-shadow: 0 2px 0 rgba(17, 17, 17, 0.12);
+}
+.caution-tape::before,
+.caution-tape::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  height: 7px;
+  background: repeating-linear-gradient(-45deg, #111 0 10px, #FFD400 10px 20px);
+  animation: caution-stripes 1.6s linear infinite;
+}
+.caution-tape::before { top: 0; }
+.caution-tape::after { bottom: 0; animation-direction: reverse; }
+.caution-track { animation: caution-scroll 38s linear infinite; }
+.caution-tape:hover .caution-track,
+.caution-tape:hover::before,
+.caution-tape:hover::after { animation-play-state: paused; }
+@keyframes caution-stripes { to { background-position: 56.569px 0; } }
+@keyframes caution-scroll { to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) {
+  .caution-track,
+  .caution-tape::before,
+  .caution-tape::after { animation: none; }
+}
+
 .film-grain {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   background-size: 160px 160px;

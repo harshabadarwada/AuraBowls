@@ -97,11 +97,21 @@ export function HomeStory() {
             <Callouts side="right" title="Non-veg bowl" sources={nonVegSources} fades={nonVegFades} groupOpacity={stageTwoOpacity} />
           </Bowl>
 
-          <motion.div style={{ opacity: headlineOpacity, y: headlineY }} className="pointer-events-none absolute left-1/2 top-[46%] z-20 w-[78vw] -translate-x-1/2 px-2 text-center wide:top-[calc(50%-min(7vw,100px))] wide:w-[min(30vw,26rem)]">
+          <motion.div style={{ opacity: headlineOpacity, y: headlineY }} className="pointer-events-none absolute left-1/2 top-[calc(clamp(8%,50%_-_15rem,20%)_+_min(30vw,235px)_+_4.5rem)] z-20 w-[86vw] max-w-md -translate-x-1/2 px-2 text-center wide:top-[calc(50%-min(7vw,100px))] wide:w-[min(30vw,26rem)]">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#F15C00]">AuraBowls</p>
             <h1 className="display mt-3 text-[2.1rem] leading-[1.02] text-[#FFF8F2] sm:text-5xl wide:text-[3.4rem]">
               Good food. Your kind of bowl.
             </h1>
+            <p className="mx-auto mt-4 max-w-xs text-sm leading-6 text-[#FFF8F2]/70 wide:hidden">
+              Veg and non-veg bowls, oats and salads. Order on WhatsApp.
+            </p>
+            <ul className="mt-5 flex flex-wrap justify-center gap-2 wide:hidden [@media(max-height:720px)]:hidden">
+              {["Veg & non-veg", "Custom bowls from ₹120", "Madhapur delivery"].map((fact) => (
+                <li key={fact} className="rounded-full bg-white/10 px-3 py-1.5 text-[11px] font-semibold tracking-[0.04em] text-[#FFF8F2]/85 ring-1 ring-white/15">
+                  {fact}
+                </li>
+              ))}
+            </ul>
           </motion.div>
 
           <motion.p style={{ opacity: stageTwoOpacity }} className="pointer-events-none absolute inset-x-0 bottom-[4%] z-20 px-6 text-center text-[11px] font-semibold uppercase tracking-[0.18em] text-[#FFF8F2]/60">
@@ -158,7 +168,7 @@ function Bowl({
 }) {
   return (
     <motion.div
-      className={`absolute top-[8%] z-10 w-[44vw] max-w-[230px] sm:max-w-[340px] wide:top-[calc(50%-min(17vw,240px))] wide:w-[30vw] wide:max-w-[420px] ${side === "left" ? "left-[2%] wide:left-[3%]" : "right-[2%] wide:right-[3%]"}`}
+      className={`absolute top-[clamp(8%,50%_-_15rem,20%)] z-10 w-[44vw] max-w-[230px] sm:max-w-[340px] wide:top-[calc(50%-min(17vw,240px))] wide:w-[30vw] wide:max-w-[420px] ${side === "left" ? "left-[2%] wide:left-[3%]" : "right-[2%] wide:right-[3%]"}`}
       initial={{ x: enterFrom, rotate: enterRotate }}
       animate={{ x: 0, rotate: 0 }}
       transition={{ type: "spring", stiffness: 54, damping: 16, mass: 0.9, delay: side === "left" ? 0.05 : 0.12 }}
