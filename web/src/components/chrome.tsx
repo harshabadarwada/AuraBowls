@@ -8,7 +8,7 @@ import { Signature } from "@/components/signature";
 export function Logo({ light = false }: { light?: boolean }) {
   return (
     <span className={`inline-flex items-center ${light ? "rounded-2xl bg-white px-3 py-1" : ""}`}>
-      <img src="/aura-logo.png" alt="" className="h-12 w-12 object-contain" />
+      <img src="/aura-logo.png" alt="AuraBowls" className="h-12 w-12 object-contain" />
     </span>
   );
 }
@@ -245,7 +245,7 @@ export function Footer({ whatsapp }: { whatsapp: string }) {
       <div className="relative mx-auto grid max-w-7xl gap-10 px-5 pb-10 pt-12 sm:px-8 sm:pt-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:gap-16">
         <div>
           <Logo light />
-          <p className="mt-5 max-w-xs text-sm leading-6 text-[#d5e4d8]">Fresh, balanced meals for everyday living. Breakfast and lunch, on a schedule you choose.</p>
+          <p className="mt-5 max-w-xs text-sm leading-6 text-[#d5e4d8]">Fresh breakfast and lunch bowls for Madhapur and nearby PIN 500081, including Hitech City, Hyderabad.</p>
         </div>
         <div className="grid grid-cols-2 gap-x-6 gap-y-10 lg:grid-cols-3">
           <FooterLinks title="Order" links={[["/menu", "Menu"], ["/plans", "Meal plans"], ["/cart", "Cart"], ["/track", "Track an order"]]} />
@@ -267,7 +267,7 @@ export function Footer({ whatsapp }: { whatsapp: string }) {
         </div>
       </div>
       <div className="relative mx-auto flex max-w-7xl flex-col-reverse items-center gap-5 border-t border-white/10 px-5 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-6 sm:flex-row sm:justify-between sm:px-8 md:pb-8">
-        <p className="text-xs text-white/55">© AuraBowls</p>
+        <p className="text-xs text-white/55">© AuraBowls · Madhapur, Hyderabad 500081</p>
         <Signature />
       </div>
     </footer>

@@ -4,29 +4,24 @@ import { notFound } from "next/navigation";
 import { MacroPills, MealPhoto, NutritionLine } from "@/components/meal-card";
 import { AddMealButton } from "@/components/add-meal";
 import { dietLabel, formatInr } from "@/lib/format";
+import { JsonLd, breadcrumbJsonLd, mealJsonLd, mealMeta } from "@/lib/seo";
 import { getMeal, grams } from "@/server/catalog";
 import type { CSSProperties } from "react";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const meal = await getMeal((await params).slug);
-  return { title: meal?.name || "Meal", description: meal?.description };
+  if (!meal) return { title: "Meal" };
+  return mealMeta(meal);
 }
 
 export default async function MealPage({ params }: { params: Promise<{ slug: string }> }) {
   const meal = await getMeal((await params).slug);
   if (!meal) notFound();
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Product",
-    name: meal.name,
-    description: meal.description,
-    image: meal.imageIsPlaceholder ? undefined : meal.imageUrl,
-    offers: { "@type": "Offer", priceCurrency: "INR", price: (meal.pricePaise / 100).toFixed(2), availability: meal.available ? "https://schema.org/InStock" : "https://schema.org/OutOfStock" },
-  };
   return (
     <article className="relative grid gap-6 pb-24 lg:grid-cols-2 lg:pb-0">
+      <JsonLd data={breadcrumbJsonLd([{ name: "Home", path: "/" }, { name: "Menu", path: "/menu" }, { name: meal.name, path: `/meals/${meal.slug}` }])} />
+      <JsonLd data={mealJsonLd(meal)} />
       <div className="hero-light pointer-events-none absolute -left-8 top-8 -z-10 h-56 w-56 rounded-full bg-[#EAF6DC] blur-3xl" />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <div className="hero-bowl" style={{ "--d": "200ms" } as CSSProperties}>
         <MealPhoto meal={meal} className="aspect-[4/5] rounded-[1.8rem] shadow-[0_24px_48px_rgba(26,74,22,0.12)] sm:aspect-[5/4]" />
       </div>

@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import { Stage } from "@/components/stage";
-export const metadata: Metadata = { title: "Privacy" };
+import { pageMeta } from "@/lib/seo";
+export const metadata: Metadata = pageMeta({
+  title: "Privacy",
+  description: "How AuraBowls uses your name, mobile number, delivery address and order details for meals delivered in Madhapur, Hyderabad.",
+  path: "/privacy",
+});
 export default function PrivacyPage() {
   return (
     <article className="prose-page space-y-3 text-sm leading-7 text-[#6A5A4E]">

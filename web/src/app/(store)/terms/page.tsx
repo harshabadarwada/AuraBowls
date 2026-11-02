@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import { Stage } from "@/components/stage";
-export const metadata: Metadata = { title: "Terms" };
+import { pageMeta } from "@/lib/seo";
+export const metadata: Metadata = pageMeta({
+  title: "Terms",
+  description: "AuraBowls order, payment and Madhapur delivery terms. An order stays pending until the kitchen confirms it on WhatsApp.",
+  path: "/terms",
+});
 export default function TermsPage() {
   return (
     <article className="space-y-3 text-sm leading-7 text-[#6A5A4E]">

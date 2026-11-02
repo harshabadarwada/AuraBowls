@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import { Stage } from "@/components/stage";
-export const metadata: Metadata = { title: "Cancellation and refunds" };
+import { pageMeta } from "@/lib/seo";
+export const metadata: Metadata = pageMeta({
+  title: "Cancellation and refunds",
+  description: "AuraBowls meal-change, skip and refund rules for breakfast and lunch delivered in Madhapur. Changes need 24 hours' notice in Asia/Kolkata.",
+  path: "/refund-policy",
+});
 export default function RefundPolicyPage() {
   return (
     <article className="space-y-3 text-sm leading-7 text-[#6A5A4E]">

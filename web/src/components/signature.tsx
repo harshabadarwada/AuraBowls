@@ -26,7 +26,7 @@ export function Signature() {
         <span className="text-[10px] font-medium uppercase tracking-[0.3em] text-[#EAF6DC]/75">Built by</span>
         <span className="relative mt-1 inline-block px-1 pb-2">
           <motion.span
-            className={`${script.className} inline-block text-[2.6rem] leading-[1.15] text-[#FFF8F2] transition-colors duration-300 group-hover:text-white motion-reduce:transition-none`}
+            className={`${script.className} inline-block text-[1.55rem] leading-[1.2] text-[#FFF8F2] transition-colors duration-300 group-hover:text-white motion-reduce:transition-none sm:text-[2.6rem] sm:leading-[1.15]`}
             initial={{ clipPath: "inset(-20% 100% -20% 0)" }}
             animate={shown ? { clipPath: "inset(-20% -6% -20% 0)" } : undefined}
             transition={reduce ? instant : { duration: 1.6, delay: 0.25, ease }}

@@ -42,6 +42,8 @@ export function StoryBackdrop({ progress }: { progress: MotionValue<number> }) {
   const midWord = useTransform(progress, [0, 1], ["5vw", "-5vw"]);
   const midOpacity = useTransform(progress, [0, 0.3, 0.46, 0.66, 0.76], [0.5, 0.5, 1, 1, 0.4]);
   const endOpacity = useTransform(progress, [0.6, 0.82], [0.35, 1]);
+  const forestReveal = useTransform(progress, [0.28, 0.46], ["circle(0% at 50% 42%)", "circle(150% at 50% 42%)"]);
+  const emberReveal = useTransform(progress, [0.64, 0.82], ["circle(0% at 50% 62%)", "circle(150% at 50% 62%)"]);
 
   return (
     <div aria-hidden="true" className="pointer-events-none absolute inset-0">
@@ -51,6 +53,14 @@ export function StoryBackdrop({ progress }: { progress: MotionValue<number> }) {
           backgroundImage:
             "radial-gradient(110% 70% at 50% -12%, rgba(16,41,29,0.95) 0%, rgba(16,41,29,0) 62%), radial-gradient(70% 55% at 50% 112%, rgba(16,41,29,0.9) 0%, rgba(16,41,29,0) 70%), radial-gradient(140% 100% at 50% 50%, rgba(16,20,17,0) 55%, rgba(5,7,6,0.55) 100%)",
         }}
+      />
+      <motion.div
+        className="absolute inset-0 bg-[radial-gradient(120%_80%_at_50%_0%,#22663F_0%,#0F3A24_55%,#08221A_100%)]"
+        style={{ clipPath: forestReveal }}
+      />
+      <motion.div
+        className="absolute inset-0 bg-[radial-gradient(120%_85%_at_50%_0%,#FF7A1F_0%,#E0540A_45%,#9C3602_100%)]"
+        style={{ clipPath: emberReveal }}
       />
       <motion.p style={{ x: leftWord }} className="display outline-word absolute left-[-3vw] top-[1%] whitespace-nowrap text-[24vw] leading-none wide:top-[calc(50%-min(31vw,446px))] wide:text-[15vw]">
         FRESH

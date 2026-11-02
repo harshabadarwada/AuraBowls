@@ -9,7 +9,7 @@ export function MealPhoto({ meal, className = "" }: { meal: Pick<PublicMeal, "na
   }
   return (
     <div className={`relative overflow-hidden bg-[#EAF6DC] ${className}`}>
-      <img src={meal.imageUrl} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover object-center" />
+      <img src={meal.imageUrl} alt={meal.name} loading="lazy" decoding="async" className="h-full w-full object-cover object-center" />
       {meal.imageIsPlaceholder ? (
         <span className="absolute bottom-3 left-3 rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-semibold text-[#6A5A4E]">Placeholder photo</span>
       ) : null}

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { PlanBuilder } from "@/components/plan-builder";
 import { db } from "@/lib/db";
 import { businessWhatsapp } from "@/lib/order-message";
+import { pageMeta } from "@/lib/seo";
 import { getSettings, listMeals, mealImage, type PublicMeal } from "@/server/catalog";
 import { planMealsFromPaise, publishedPlan, publishedPlans, publishedSlots, type PublishedPlan } from "@/server/published-plans";
 
@@ -36,12 +37,15 @@ function optionsFor(templates: PublishedPlan[], meals: PublicMeal[]) {
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const slug = (await params).slug;
-  try {
-    const plan = await db().planTemplate.findUnique({ where: { slug } });
-    return { title: plan?.name || publishedPlan(slug)?.name || "Meal plan" };
-  } catch {
-    return { title: publishedPlan(slug)?.name || "Meal plan" };
-  }
+  const fallback = publishedPlan(slug);
+  const plan = await db().planTemplate.findUnique({ where: { slug } }).catch(() => null);
+  const name = plan?.name || fallback?.name || "Meal plan";
+  const description = fallback?.description || plan?.description || name;
+  return pageMeta({
+    title: `${name} in Madhapur`,
+    description: `${description} Delivered in Madhapur and nearby PIN 500081, Hyderabad. Order on WhatsApp.`,
+    path: `/plans/${slug}`,
+  });
 }
 
 export default async function PlanPage({ params }: { params: Promise<{ slug: string }> }) {

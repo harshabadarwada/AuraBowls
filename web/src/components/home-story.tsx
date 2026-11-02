@@ -32,7 +32,7 @@ function useBand(progress: MotionValue<number>, showAt: number, hideAt: number) 
 export function HomeStory() {
   const sectionRef = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({ target: sectionRef, offset: ["start start", "end end"] });
-  const progress = useSpring(scrollYProgress, { stiffness: 70, damping: 22, mass: 0.4, restDelta: 0.001 });
+  const progress = useSpring(scrollYProgress, { stiffness: 180, damping: 32, mass: 0.35, restDelta: 0.0005 });
 
   const headlineOpacity = useTransform(progress, [0, 0.24, 0.34], [1, 1, 0]);
   const headlineY = useTransform(progress, [0, 0.34], ["0vh", "-4vh"]);
@@ -40,8 +40,6 @@ export function HomeStory() {
   const stageTwoOpacity = useTransform(progress, [0.38, 0.46, 0.64, 0.7], [0, 1, 1, 0]);
   const stageThreeOpacity = useTransform(progress, [0.72, 0.84, 1], [0, 1, 1]);
   const stageThreeY = useTransform(progress, [0.72, 0.86], ["4vh", "0vh"]);
-  const floorOpacity = useTransform(progress, [0.7, 0.84, 1], [0, 1, 1]);
-
   const vegFades = [useBand(progress, 0.42, 0.64), useBand(progress, 0.46, 0.64), useBand(progress, 0.5, 0.64)];
   const nonVegFades = [useBand(progress, 0.44, 0.64), useBand(progress, 0.48, 0.64), useBand(progress, 0.52, 0.64)];
 
@@ -61,14 +59,9 @@ export function HomeStory() {
       <div className="hidden motion-reduce:block">
         <CalmStory />
       </div>
-      <section ref={sectionRef} className="relative h-[340vh] motion-reduce:hidden" aria-label="AuraBowls story">
+      <section ref={sectionRef} className="relative h-[220vh] motion-reduce:hidden wide:h-[250vh]" aria-label="AuraBowls story">
         <div className="sticky top-16 h-[calc(100svh-4rem-4.5rem)] overflow-hidden bg-[#101411] md:top-[4.5rem] md:h-[calc(100svh-4.5rem)] md:rounded-b-[32px]">
           <StoryBackdrop progress={progress} />
-          <motion.div
-            style={{ opacity: floorOpacity }}
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-x-[-10%] top-[30%] h-[46%] bg-[radial-gradient(closest-side,rgba(241,92,0,0.13),rgba(241,92,0,0.04)_55%,rgba(241,92,0,0))] wide:top-[40%]"
-          />
           <StoryIngredients progress={progress} />
           <Bowl
             src={vegBowl}
@@ -102,8 +95,8 @@ export function HomeStory() {
             <h1 className="display mt-3 text-[2.1rem] leading-[1.02] text-[#FFF8F2] sm:text-5xl wide:text-[3.4rem]">
               Good food. Your kind of bowl.
             </h1>
-            <p className="mx-auto mt-4 max-w-xs text-sm leading-6 text-[#FFF8F2]/70 wide:hidden">
-              Veg and non-veg bowls, oats and salads. Order on WhatsApp.
+            <p className="mx-auto mt-4 max-w-sm text-sm leading-6 text-[#FFF8F2]/70">
+              Veg and non-veg protein bowls, oats and salads, delivered in Madhapur. Order on WhatsApp.
             </p>
             <ul className="mt-5 flex flex-wrap justify-center gap-2 wide:hidden [@media(max-height:720px)]:hidden">
               {["Veg & non-veg", "Custom bowls from ₹120", "Madhapur delivery"].map((fact) => (
@@ -114,9 +107,10 @@ export function HomeStory() {
             </ul>
           </motion.div>
 
-          <motion.p style={{ opacity: stageTwoOpacity }} className="pointer-events-none absolute inset-x-0 bottom-[4%] z-20 px-6 text-center text-[11px] font-semibold uppercase tracking-[0.18em] text-[#FFF8F2]/60">
-            Protein sources from bowls on our menu
-          </motion.p>
+          <motion.div style={{ opacity: stageTwoOpacity }} className="pointer-events-none absolute inset-x-0 bottom-[7%] z-20 px-6 text-center wide:bottom-[4%]">
+            <p className="display mx-auto max-w-xs text-[1.7rem] leading-[1.08] text-[#FFF8F2] wide:hidden">Real protein in every bowl.</p>
+            <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#FFF8F2]/65">Protein sources from bowls on our menu</p>
+          </motion.div>
 
           <motion.div
             style={{ opacity: stageThreeOpacity, y: stageThreeY }}
@@ -124,7 +118,7 @@ export function HomeStory() {
             aria-hidden={choicesReady ? undefined : true}
           >
             <div className="mx-auto max-w-md text-center">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#F15C00]">Your next step</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#FFF8F2]/80">Your next step</p>
               <h2 className="display mt-2 text-3xl leading-[1.05] text-[#FFF8F2] wide:text-[2.6rem]">How would you like to eat?</h2>
             </div>
             <div className="mx-auto mt-5 grid max-w-md gap-3">

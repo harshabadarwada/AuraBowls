@@ -1,5 +1,7 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { HomeStory } from "@/components/home-story";
+import { JsonLd, faqJsonLd, pageMeta } from "@/lib/seo";
 import { listMeals, grams, type PublicMeal } from "@/server/catalog";
 import { publishedPlans } from "@/server/published-plans";
 import { db } from "@/lib/db";
@@ -22,6 +24,25 @@ const goalLooks: Record<string, { image: string; copy: string }> = {
 const goalFallbacks = ["/backdrop/tofu-power-bowl.jpg", "/backdrop/smoky-bbq-chicken-bowl.jpg", "/backdrop/mediterranean-breakfast-salad.jpg"];
 
 const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+
+export const metadata: Metadata = {
+  ...pageMeta({
+    title: "Protein Bowls Delivered in Madhapur",
+    description: "Aura Bowls delivers veg and non-veg protein bowls, biryani bowls, overnight oats, salads and juices in Madhapur and nearby PIN 500081, Hyderabad. Custom bowls from ₹120. Meal plans for breakfast and lunch. Order on WhatsApp.",
+    path: "/",
+  }),
+  title: { absolute: "Protein Bowls Delivered in Madhapur | Aura Bowls Hyderabad" },
+};
+
+const faqs = [
+  { q: "Where does AuraBowls deliver?", a: "We deliver in Madhapur and nearby areas, PIN 500081, including Hitech City. If you are outside this PIN, send your address on WhatsApp and we will reply." },
+  { q: "How do I order?", a: "Add bowls from the menu or pick a meal plan, then send the order on WhatsApp. We reply on that chat with the total and a payment QR. You pay only after that." },
+  { q: "Do you have veg and non-veg bowls?", a: "Yes. Veg bowls use paneer, tofu, soya chunks or chickpeas. Non-veg bowls use grilled chicken, crispy chicken or eggs." },
+  { q: "Can I build my own bowl?", a: "Yes. A custom bowl starts at ₹120 with a base, veggies and a sauce. Protein is ₹40 per portion, up to three portions, and extras are ₹40 or ₹50 each." },
+  { q: "What meal plans do you offer?", a: "Breakfast, lunch, or both. Choose a single day, five weekdays at 5% off, or twenty weekdays at 10% off the menu price of the default meals, and pick each day's bowl yourself." },
+  { q: "When are deliveries?", a: "Monday to Saturday. Breakfast arrives between 7:30 and 10:30 am and lunch between 12:00 and 3:00 pm. You choose the slot when you order." },
+  { q: "Is delivery free?", a: "Delivery charges vary by location and are not included in menu prices. The kitchen confirms the charge on WhatsApp before you pay." },
+];
 
 const steps = [
   { title: "Choose", copy: "Pick single bowls from the menu, or a plan for the week. You can browse before sharing any details.", icon: "M4 7h16M4 12h10M4 17h7" },
@@ -57,7 +78,14 @@ export default async function HomePage() {
 
   return (
     <div className="space-y-20 sm:space-y-28">
+      <JsonLd data={faqJsonLd(faqs)} />
       <HomeStory />
+      <section className="story max-w-3xl">
+        <h2 className="display text-3xl leading-[1.08] text-[#1A4A16] sm:text-4xl">Healthy bowls for Madhapur offices and homes.</h2>
+        <p className="mt-4 text-sm leading-7 text-[#6A5A4E] sm:text-base">
+          Aura Bowls is a Hyderabad kitchen, not a singing-bowl shop. We cook paneer, chicken, tofu, egg and soya bowls, overnight oats, salads, juices and bites, then deliver them in Madhapur and nearby PIN 500081, including Hitech City. Breakfast lands between 7:30 and 10:30 am, lunch between 12:00 and 3:00 pm, Monday to Saturday. Build a bowl from ₹120, or put breakfast and lunch on a 5-day or 20-day plan. The order goes to us on WhatsApp. Delivery charges vary by location and are confirmed before you pay.
+        </p>
+      </section>
 
       <section className="story">
         <div className="flex flex-wrap items-end justify-between gap-4">
@@ -179,6 +207,27 @@ export default async function HomePage() {
         </ol>
       </section>
 
+      <section className="story grid gap-8 lg:grid-cols-[minmax(0,22rem)_1fr] lg:gap-14">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#F15C00]">Questions</p>
+          <h2 className="display mt-2 text-4xl leading-[1.02] text-[#1A4A16] sm:text-5xl">Healthy food delivery in Madhapur.</h2>
+          <p className="mt-4 max-w-sm text-sm leading-7 text-[#6A5A4E]">
+            Fresh bowls, oats, salads and juices from our kitchen, delivered around Madhapur and Hitech City, Hyderabad.
+          </p>
+        </div>
+        <div className="divide-y divide-[#EAE4DD] rounded-[28px] bg-white px-5 ring-1 ring-[#EAE4DD] sm:px-7">
+          {faqs.map((item) => (
+            <details key={item.q} className="group py-4">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-base font-semibold text-[#1A4A16] [&::-webkit-details-marker]:hidden">
+                {item.q}
+                <span aria-hidden="true" className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#EAF6DC] text-lg leading-none transition group-open:rotate-45 motion-reduce:transition-none">+</span>
+              </summary>
+              <p className="mt-2 pr-10 text-sm leading-6 text-[#6A5A4E]">{item.a}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+
       <section className="story relative overflow-hidden rounded-[32px] bg-[#101411] px-6 pb-0 pt-12 text-white sm:px-10 sm:pt-16">
         <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-3/4 bg-[radial-gradient(60%_70%_at_50%_100%,rgba(241,92,0,0.22),rgba(241,92,0,0))]" />
         <span aria-hidden="true" className="film-grain pointer-events-none absolute inset-0 opacity-[0.05]" />
@@ -212,7 +261,7 @@ function ShowcaseCard({ meal }: { meal: PublicMeal }) {
       href={`/meals/${meal.slug}`}
       className="group relative block aspect-[4/5] overflow-hidden rounded-[28px] bg-[#10291D] text-white shadow-[0_22px_44px_rgba(16,41,29,0.16)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#F15C00]"
     >
-      <img src={meal.imageUrl} alt="" loading="lazy" decoding="async" className="absolute inset-0 !h-full w-full object-cover transition duration-700 group-hover:scale-105 motion-reduce:transition-none" />
+      <img src={meal.imageUrl} alt={meal.name} loading="lazy" decoding="async" className="absolute inset-0 !h-full w-full object-cover transition duration-700 group-hover:scale-105 motion-reduce:transition-none" />
       <span aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(180deg,rgba(16,20,17,0.05)_35%,rgba(16,20,17,0.9)_100%)]" />
       <span className="absolute left-4 top-4 flex flex-wrap gap-1.5">
         <span className="rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#1A4A16]">{meal.mealType}</span>
