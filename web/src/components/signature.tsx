@@ -7,6 +7,8 @@ import { motion, useInView, useReducedMotion, useScroll, useTransform } from "mo
 const script = Great_Vibes({ subsets: ["latin"], weight: "400", display: "swap" });
 const ease = [0.65, 0, 0.35, 1] as const;
 
+const makerHref = "";
+
 export function Signature() {
   const ref = useRef<HTMLDivElement>(null);
   const reduce = useReducedMotion();
@@ -14,25 +16,36 @@ export function Signature() {
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
   const drift = useTransform(scrollYProgress, [0, 1], [12, -12]);
   const instant = { duration: 0 };
+  const linked = makerHref.trim().length > 0;
+
+  const name = (
+    <motion.span
+      className={`${script.className} inline-block whitespace-nowrap text-[1.45rem] leading-[1.25] text-[#FFF8F2] transition-colors duration-300 group-hover:text-white motion-reduce:transition-none sm:text-[2.35rem] sm:leading-[1.2]`}
+      initial={{ clipPath: "inset(-20% 100% -20% 0)" }}
+      animate={shown ? { clipPath: "inset(-20% -6% -20% 0)" } : undefined}
+      transition={reduce ? instant : { duration: 1.6, delay: 0.25, ease }}
+    >
+      Hell-Lord
+    </motion.span>
+  );
 
   return (
     <motion.div ref={ref} style={{ y: drift }} className="motion-reduce:!transform-none">
       <motion.p
-        className="group flex cursor-default flex-col items-center leading-none sm:items-end"
+        className={`group flex flex-col items-center leading-none sm:items-end ${linked ? "cursor-pointer" : "cursor-default"}`}
         initial={{ opacity: 0, y: 12 }}
         animate={shown ? { opacity: 1, y: 0 } : undefined}
         transition={reduce ? instant : { duration: 0.7, ease: [0.16, 0.84, 0.32, 1] }}
       >
         <span className="text-[10px] font-medium uppercase tracking-[0.3em] text-[#EAF6DC]/75">Built by</span>
         <span className="relative mt-1 inline-block px-1 pb-2">
-          <motion.span
-            className={`${script.className} inline-block text-[1.55rem] leading-[1.2] text-[#FFF8F2] transition-colors duration-300 group-hover:text-white motion-reduce:transition-none sm:text-[2.6rem] sm:leading-[1.15]`}
-            initial={{ clipPath: "inset(-20% 100% -20% 0)" }}
-            animate={shown ? { clipPath: "inset(-20% -6% -20% 0)" } : undefined}
-            transition={reduce ? instant : { duration: 1.6, delay: 0.25, ease }}
-          >
-            Harsha
-          </motion.span>
+          {linked ? (
+            <a href={makerHref} className="rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#F15C00]" rel="noopener noreferrer">
+              {name}
+            </a>
+          ) : (
+            name
+          )}
           <span
             aria-hidden="true"
             className="absolute inset-x-2 bottom-1 h-px origin-left scale-x-0 rounded-full bg-[#F15C00] transition-transform duration-500 ease-out group-hover:scale-x-100 motion-reduce:transition-none"
