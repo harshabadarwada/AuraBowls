@@ -1,4 +1,4 @@
-const LIVE_ORIGIN = "https://aura-bowls-harshabadarwadas-projects.vercel.app";
+const LIVE_ORIGIN = "https://theaurabowls.com";
 
 const unusable = new Set([
   "localhost",

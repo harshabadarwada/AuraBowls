@@ -18,6 +18,14 @@ describe("publicSiteUrl", () => {
     expect(publicSiteUrl().origin).toBe("https://example.com");
   });
 
+  it("falls back to theaurabowls.com in production when no other host is set", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "");
+    vi.stubEnv("VERCEL_PROJECT_PRODUCTION_URL", "");
+    vi.stubEnv("VERCEL_URL", "");
+    expect(publicSiteUrl().origin).toBe("https://theaurabowls.com");
+  });
+
   it("stays on localhost in development", () => {
     vi.stubEnv("NODE_ENV", "development");
     vi.stubEnv("NEXT_PUBLIC_APP_URL", "");
