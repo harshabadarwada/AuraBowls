@@ -1,3 +1,4 @@
+import { areaLine, isServedArea } from "@/lib/area";
 import { formatInr } from "@/lib/format";
 import { BASE_BOWL_PAISE, PORTION_PAISE, describeCustomBowl, type CustomBowl } from "@/lib/custom-bowl";
 
@@ -67,7 +68,7 @@ export function orderSummaryText(input: {
   ].join("\n");
   const tail = [
     "*Delivery*",
-    `Area PIN: ${input.pinCode || "On the order"}`,
+    areaLine(input.pinCode) || "Area: On the order",
     input.instructions ? `Instructions: ${input.instructions}` : "",
     "",
     "*Payment summary*",
@@ -101,7 +102,7 @@ function identity(input: { name: string; address: string; pin: string }) {
     "Hello AuraBowls,",
     `Name: ${input.name.trim()}`,
     `Address: ${input.address.trim()}`,
-    input.pin.trim() ? `PIN: ${input.pin.trim()}` : "",
+    areaLine(input.pin),
   ].filter(Boolean);
 }
 
@@ -109,7 +110,7 @@ export function outsideAreaText(input: { name: string; address: string; pin: str
   return [
     ...identity(input),
     "",
-    "I am interested in AuraBowls, but this address is outside PIN 500081.",
+    "I am interested in AuraBowls, but this address is more than 7 km from Madhapur.",
     "Please reply if you can deliver here.",
   ].join("\n");
 }
@@ -186,7 +187,7 @@ export function guideOrderText(input: {
 
 export function menuOrderText(input: { name: string; address: string; pin: string; lines: { name: string; quantity: number; pricePaise: number }[] }) {
   const total = input.lines.reduce((sum, line) => sum + line.pricePaise * line.quantity, 0);
-  if (input.pin.trim() !== "500081") return outsideAreaText(input);
+  if (!isServedArea(input.pin)) return outsideAreaText(input);
   return [
     ...identity(input),
     "",
@@ -201,7 +202,7 @@ export function menuOrderText(input: { name: string; address: string; pin: strin
 }
 
 export function customBowlText(input: { name: string; address: string; pin: string; bowl: CustomBowl }) {
-  if (input.pin.trim() !== "500081") return outsideAreaText(input);
+  if (!isServedArea(input.pin)) return outsideAreaText(input);
   const { priced, lines } = describeCustomBowl(input.bowl);
   return [
     ...identity(input),
@@ -228,7 +229,7 @@ export function planOrderText(input: {
   lines: { date: string; mealName: string; slotLabel: string }[];
   totalPaise: number;
 }) {
-  if (input.pin.trim() !== "500081") return outsideAreaText(input);
+  if (!isServedArea(input.pin)) return outsideAreaText(input);
   const day = (iso: string) => {
     const [year, month, dayNumber] = iso.split("-").map(Number);
     return new Date(Date.UTC(year, month - 1, dayNumber)).toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });

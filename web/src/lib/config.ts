@@ -1,3 +1,5 @@
+import { KITCHEN_SPREADSHEET_ID } from "@/lib/kitchen-sheet";
+
 export function appSecret(): string {
   const secret = process.env.APP_SECRET;
   if (!secret || secret.length < 16) {
@@ -28,6 +30,6 @@ export function sheetsConfigured(): boolean {
   return Boolean(
     process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL &&
       process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY &&
-      process.env.GOOGLE_SHEETS_SPREADSHEET_ID,
+      (process.env.GOOGLE_SHEETS_SPREADSHEET_ID || KITCHEN_SPREADSHEET_ID),
   );
 }

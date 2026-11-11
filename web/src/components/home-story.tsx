@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState, type ReactNode } from "react";
-import { motion, useMotionValueEvent, useScroll, useSpring, useTransform, type MotionValue } from "motion/react";
+import { useRef, type ReactNode } from "react";
+import { motion, useScroll, useTransform, type MotionValue } from "motion/react";
 import { StoryBackdrop, StoryIngredients } from "@/components/story-atmosphere";
 
 const vegBowl = "/cutouts/paneer-power-bowl.webp";
@@ -31,8 +31,7 @@ function useBand(progress: MotionValue<number>, showAt: number, hideAt: number) 
 
 export function HomeStory() {
   const sectionRef = useRef<HTMLElement>(null);
-  const { scrollYProgress } = useScroll({ target: sectionRef, offset: ["start start", "end end"] });
-  const progress = useSpring(scrollYProgress, { stiffness: 180, damping: 32, mass: 0.35, restDelta: 0.0005 });
+  const { scrollYProgress: progress } = useScroll({ target: sectionRef, offset: ["start start", "end end"] });
 
   const headlineOpacity = useTransform(progress, [0, 0.24, 0.34], [1, 1, 0]);
   const headlineY = useTransform(progress, [0, 0.34], ["0vh", "-4vh"]);
@@ -51,16 +50,15 @@ export function HomeStory() {
   const leftTilt = useTransform(progress, frames, [0, 0, -6, -6, -9, -9]);
   const rightTilt = useTransform(progress, frames, [0, 0, 6, 6, 9, 9]);
 
-  const [choicesReady, setChoicesReady] = useState(false);
-  useMotionValueEvent(progress, "change", (value) => setChoicesReady(value > 0.8));
+  const choiceEvents = useTransform(progress, (value) => (value > 0.78 ? "auto" : "none"));
 
   return (
     <div data-full-bleed className="-mt-8 ml-[calc(50%-50vw)] w-screen">
       <div className="hidden motion-reduce:block">
         <CalmStory />
       </div>
-      <section ref={sectionRef} className="relative h-[220vh] motion-reduce:hidden wide:h-[250vh]" aria-label="AuraBowls story">
-        <div className="sticky top-16 h-[calc(100svh-4rem-4.5rem)] overflow-hidden bg-[#101411] md:top-[4.5rem] md:h-[calc(100svh-4.5rem)] md:rounded-b-[32px]">
+      <section ref={sectionRef} className="relative h-[170vh] motion-reduce:hidden wide:h-[190vh]" aria-label="AuraBowls story">
+        <div className="sticky top-16 h-[calc(100svh-4rem-4.5rem)] overflow-hidden bg-[#101411] transform-gpu md:top-[4.5rem] md:h-[calc(100svh-4.5rem)] md:rounded-b-[32px]">
           <StoryBackdrop progress={progress} />
           <StoryIngredients progress={progress} />
           <Bowl
@@ -99,7 +97,7 @@ export function HomeStory() {
               Veg and non-veg protein bowls, oats and salads, delivered in Madhapur. Order on WhatsApp.
             </p>
             <ul className="mt-5 flex flex-wrap justify-center gap-2 wide:hidden [@media(max-height:720px)]:hidden">
-              {["Veg & non-veg", "Custom bowls from ₹120", "Madhapur delivery"].map((fact) => (
+              {["Veg & non-veg", "Subscriptions from ₹630", "Madhapur delivery"].map((fact) => (
                 <li key={fact} className="rounded-full bg-white/10 px-3 py-1.5 text-[11px] font-semibold tracking-[0.04em] text-[#FFF8F2]/85 ring-1 ring-white/15">
                   {fact}
                 </li>
@@ -113,17 +111,16 @@ export function HomeStory() {
           </motion.div>
 
           <motion.div
-            style={{ opacity: stageThreeOpacity, y: stageThreeY }}
-            className={`absolute inset-x-0 bottom-[5%] z-30 px-4 wide:bottom-auto wide:left-1/2 wide:right-auto wide:top-[calc(50%-min(14vw,200px))] wide:w-[min(36vw,27rem)] wide:-translate-x-1/2 wide:px-0 ${choicesReady ? "" : "pointer-events-none"}`}
-            aria-hidden={choicesReady ? undefined : true}
+            style={{ opacity: stageThreeOpacity, y: stageThreeY, pointerEvents: choiceEvents }}
+            className="absolute inset-x-0 bottom-[5%] z-30 px-4 wide:bottom-auto wide:left-1/2 wide:right-auto wide:top-[calc(50%-min(14vw,200px))] wide:w-[min(36vw,27rem)] wide:-translate-x-1/2 wide:px-0"
           >
             <div className="mx-auto max-w-md text-center">
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#FFF8F2]/80">Your next step</p>
               <h2 className="display mt-2 text-3xl leading-[1.05] text-[#FFF8F2] wide:text-[2.6rem]">How would you like to eat?</h2>
             </div>
             <div className="mx-auto mt-5 grid max-w-md gap-3">
-              <StoryCard href="/menu" tone="light" inert={!choicesReady} title="Explore the Menu" note="Single bowls, oats, salads and juices." />
-              <StoryCard href="/plans" tone="forest" inert={!choicesReady} title="Explore Meal Plans" note="Breakfast or lunch, on a schedule you pick." />
+              <StoryCard href="/menu" tone="light" title="Explore the Menu" note="Single bowls, oats, salads and juices." />
+              <StoryCard href="/plans" tone="forest" title="Lunch subscriptions" note="3, 5, 10, 20 or 22 days. Pure veg from ₹630, after discount." />
             </div>
           </motion.div>
 
@@ -174,15 +171,13 @@ function Bowl({
         />
         <motion.div style={{ rotate: tilt }} className="relative">
           <span aria-hidden="true" className="absolute inset-x-[12%] -bottom-[6%] h-[14%] rounded-[50%] bg-black/60 blur-xl" />
-          <motion.img
+          <img
             src={src}
             alt={alt}
             width={900}
             height={620}
             draggable={false}
-            className="relative w-full select-none drop-shadow-[0_26px_24px_rgba(0,0,0,0.5)]"
-            animate={{ y: [0, -7, 0] }}
-            transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut", delay: side === "left" ? 0 : 1.4 }}
+            className="bowl-rest relative w-full select-none drop-shadow-[0_26px_24px_rgba(0,0,0,0.5)]"
           />
         </motion.div>
         {children}
@@ -352,7 +347,7 @@ function CalmStory() {
       <p className="text-center text-[11px] font-semibold uppercase tracking-[0.18em] text-[#FFF8F2]/60">Protein sources from bowls on our menu</p>
       <div className="mx-auto grid max-w-md gap-3">
         <StoryCard href="/menu" tone="light" title="Explore the Menu" note="Single bowls, oats, salads and juices." />
-        <StoryCard href="/plans" tone="forest" title="Explore Meal Plans" note="Breakfast or lunch, on a schedule you pick." />
+        <StoryCard href="/plans" tone="forest" title="Lunch subscriptions" note="3, 5, 10, 20 or 22 days. Pure veg from ₹630, after discount." />
       </div>
     </div>
   );

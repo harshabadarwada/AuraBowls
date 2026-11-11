@@ -36,6 +36,7 @@ model BusinessSettings {
   proteinGoalMinG     Int      @default(25)
   operatingWeekdays    String   @default("1,2,3,4,5,6")
   sheetsSpreadsheetId  String   @default("")
+  sheetsWebhookUrl     String   @default("")
   sheetsSyncEnabled    Boolean  @default(false)
   updatedAt            DateTime @updatedAt
 }

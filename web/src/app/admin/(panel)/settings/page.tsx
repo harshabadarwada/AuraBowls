@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { KITCHEN_SHEET_WEBHOOK, KITCHEN_SPREADSHEET_ID } from "@/lib/kitchen-sheet";
 import { guard } from "@/server/guard";
 
 export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
@@ -19,8 +20,14 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
       <label className="text-sm">High-protein threshold (grams)<input className="field mt-1" name="proteinGoalMinG" defaultValue={settings.proteinGoalMinG} /></label>
       <label className="text-sm">Operating weekdays, 0=Sun<input className="field mt-1" name="operatingWeekdays" defaultValue={settings.operatingWeekdays} /></label>
       <label className="text-sm"><input type="checkbox" name="dinnerEnabled" defaultChecked={settings.dinnerEnabled} /> Dinner is open</label>
-      <label className="text-sm"><input type="checkbox" name="sheetsSyncEnabled" defaultChecked={settings.sheetsSyncEnabled} /> Export new paid orders to Google Sheets</label>
-      <p className="text-xs text-[#6A5A4E]">New orders are saved without a tax line. Older paid orders keep the amounts already recorded. Confirm the business tax position separately before launch. Sheets export is one-way from this database.</p>
+      <label className="text-sm">Kitchen Google Sheet ID
+        <input className="field mt-1" name="sheetsSpreadsheetId" defaultValue={settings.sheetsSpreadsheetId || KITCHEN_SPREADSHEET_ID} />
+      </label>
+      <label className="text-sm">Kitchen sheet webhook
+        <input className="field mt-1" name="sheetsWebhookUrl" defaultValue={settings.sheetsWebhookUrl || KITCHEN_SHEET_WEBHOOK} placeholder="https://script.google.com/macros/s/.../exec" />
+      </label>
+      <label className="text-sm"><input type="checkbox" name="sheetsSyncEnabled" defaultChecked={settings.sheetsSyncEnabled} /> Also export new paid checkout orders to Google Sheets</label>
+      <p className="text-xs text-[#6A5A4E]">New subscription WhatsApp orders fill Subscription Orders from row 11, then insert above Total Summary. Paste web/scripts/aurabowls-kitchen-sheet.gs into Apps Script, deploy as a web app (Anyone), then paste that URL here. Payment status is Unpaid until the kitchen confirms the QR payment.</p>
       <button className="btn btn-accent w-fit">Save settings</button>
     </form>
   );

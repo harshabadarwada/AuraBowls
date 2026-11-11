@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import { Stage } from "@/components/stage";
-import { JsonLd, breadcrumbJsonLd, businessPhoneDisplay, pageMeta, servedPin } from "@/lib/seo";
+import { JsonLd, breadcrumbJsonLd, businessPhoneDisplay, pageMeta } from "@/lib/seo";
 import { getSettings } from "@/server/catalog";
 
 export const metadata: Metadata = pageMeta({
   title: "Contact Aura Bowls Madhapur",
-  description: `Message Aura Bowls on WhatsApp at ${businessPhoneDisplay} for menu, meal-plan and delivery questions in Madhapur PIN ${servedPin}, Hyderabad. Opening the chat does not send a message.`,
+  description: `Message Aura Bowls on WhatsApp at ${businessPhoneDisplay} for menu, meal-plan and delivery questions within 7 km of Madhapur, Hyderabad. Opening the chat does not send a message.`,
   path: "/contact",
 });
 
@@ -20,7 +20,7 @@ export default async function ContactPage() {
       <dl className="mt-6 max-w-xl space-y-3 text-sm leading-6 text-[#6A5A4E]">
         <div>
           <dt className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#1A4A16]">Kitchen</dt>
-          <dd>AuraBowls, Madhapur, Hyderabad, Telangana {servedPin}</dd>
+          <dd>AuraBowls, Madhapur, Hyderabad, Telangana</dd>
         </div>
         <div>
           <dt className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#1A4A16]">WhatsApp</dt>
@@ -32,7 +32,7 @@ export default async function ContactPage() {
         </div>
         <div>
           <dt className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#1A4A16]">Delivery</dt>
-          <dd>PIN {servedPin} only. Madhapur and nearby, including Hitech City. Other PINs get an enquiry, not an order.</dd>
+          <dd>Within 7 km of Madhapur, including nearby Hitech City. Farther addresses get an enquiry, not an order.</dd>
         </div>
       </dl>
       {href ? <a className="btn btn-accent mt-6" href={href}>Open WhatsApp</a> : <p className="mt-6 text-sm">Add a WhatsApp number in Admin → Settings before this button can open a chat.</p>}

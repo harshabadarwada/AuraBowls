@@ -99,7 +99,7 @@ export function PlansBoard({ plans }: { plans: PlanListing[] }) {
               </span>
               <span className="sm:text-right">
                 <span className="block text-xl font-semibold text-[#F15C00]">{plan.mealsFromPaise === null ? "Price pending" : formatInr(plan.mealsFromPaise)}</span>
-                <span className="mt-1 block text-xs text-[#6A5A4E]">{plan.mealsFromPaise === null ? "Waiting on the default meal" : "Meals from this. Delivery follows the PIN."}</span>
+                <span className="mt-1 block text-xs text-[#6A5A4E]">{plan.mealsFromPaise === null ? "Waiting on the default meal" : "Meals from this. Delivery is within 7 km of Madhapur."}</span>
               </span>
             </Link>
           </li>

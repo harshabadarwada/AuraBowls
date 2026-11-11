@@ -8,7 +8,7 @@ const sans = Plus_Jakarta_Sans({ subsets: ["latin"], variable: "--font-sans" });
 const display = DM_Serif_Display({ subsets: ["latin"], weight: "400", variable: "--font-display" });
 
 const description =
-  "Aura Bowls delivers healthy protein bowls, biryani bowls, overnight oats, salads and juices in Madhapur and nearby PIN 500081, Hyderabad. Veg and non-veg. Custom bowls from ₹120. Order on WhatsApp.";
+  "Aura Bowls delivers healthy protein bowls, biryani bowls, overnight oats, salads and juices within 7 km of Madhapur, Hyderabad. Veg and non-veg. Custom bowls from ₹120. Order on WhatsApp.";
 
 export const metadata: Metadata = {
   metadataBase: publicSiteUrl(),

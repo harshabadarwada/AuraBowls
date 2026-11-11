@@ -20,6 +20,7 @@ import {
   type CustomBowl,
   type Diet,
 } from "@/lib/custom-bowl";
+import { isServedArea } from "@/lib/area";
 import { formatInr } from "@/lib/format";
 import { customBowlText, deliveryChargeNote, outsideAreaText, whatsappHref } from "@/lib/order-message";
 
@@ -47,14 +48,18 @@ export function BowlBuilder({ whatsapp }: { whatsapp: string }) {
   const pinRef = useRef<HTMLInputElement>(null);
   const priced = priceCustomBowl(bowl);
   const current = steps[step].id;
-  const pinChecked = /^\d{6}$/.test(person.pin.trim());
-  const outside = pinChecked && person.pin.trim() !== SERVED_PIN;
+  const served = isServedArea(person.pin);
+  const pinChecked = served || person.pin.trim().length >= 3;
+  const outside = pinChecked && !served;
 
   const sectionRef = useRef<HTMLElement>(null);
   const stepsRef = useRef<HTMLOListElement>(null);
   const shownStep = useRef(step);
 
-  useEffect(() => setPerson(readPerson()), []);
+  useEffect(() => {
+    const next = readPerson();
+    setPerson(isServedArea(next.pin) ? { ...next, pin: SERVED_PIN } : next);
+  }, []);
 
   useEffect(() => {
     if (shownStep.current === step) return;
@@ -106,7 +111,7 @@ export function BowlBuilder({ whatsapp }: { whatsapp: string }) {
     const fields = [
       [person.name.trim(), nameRef, "Add your name."],
       [person.address.trim(), addressRef, "Add your delivery address."],
-      [pinChecked ? "ok" : "", pinRef, "Add a 6-digit PIN code."],
+      [pinChecked ? "ok" : "", pinRef, "Say if this address is within 7 km of Madhapur."],
     ] as const;
     const empty = fields.find(([value]) => !value);
     if (empty) {
@@ -225,16 +230,22 @@ export function BowlBuilder({ whatsapp }: { whatsapp: string }) {
           ) : null}
 
           {current === "details" ? (
-            <Step title="Where should we deliver?" hint={`We deliver to PIN ${SERVED_PIN}. Your details go into the WhatsApp message.`}>
+            <Step title="Where should we deliver?" hint="We deliver within 7 km of Madhapur. Your details go into the WhatsApp message.">
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="block text-sm font-semibold text-[#1A4A16]">
                   Name
                   <input ref={nameRef} className="field mt-1.5" value={person.name} autoComplete="name" onChange={(event) => setPerson({ ...person, name: event.target.value })} />
                 </label>
-                <label className="block text-sm font-semibold text-[#1A4A16]">
-                  PIN code
-                  <input ref={pinRef} className="field mt-1.5" value={person.pin} inputMode="numeric" maxLength={6} autoComplete="postal-code" onChange={(event) => setPerson({ ...person, pin: event.target.value.replace(/\D/g, "") })} />
-                </label>
+                <div className="block text-sm font-semibold text-[#1A4A16]">
+                  Delivery area
+                  <div className="mt-1.5 flex flex-wrap gap-2">
+                    <button type="button" className={`chip ${served ? "chip-on" : ""}`} onClick={() => setPerson({ ...person, pin: SERVED_PIN })}>Within 7 km of Madhapur</button>
+                    <button type="button" className={`chip ${outside ? "chip-on" : ""}`} onClick={() => setPerson({ ...person, pin: served ? "" : person.pin })}>Farther than 7 km</button>
+                  </div>
+                  {outside || (!served && person.pin !== "") ? (
+                    <input ref={pinRef} className="field mt-2" value={served ? "" : person.pin} placeholder="Neighbourhood or landmark" onChange={(event) => setPerson({ ...person, pin: event.target.value })} />
+                  ) : <input ref={pinRef} className="hidden" readOnly value={person.pin} />}
+                </div>
                 <label className="block text-sm font-semibold text-[#1A4A16] sm:col-span-2">
                   Delivery address
                   <textarea ref={addressRef} className="field mt-1.5 min-h-24" value={person.address} autoComplete="street-address" onChange={(event) => setPerson({ ...person, address: event.target.value })} />
@@ -242,7 +253,7 @@ export function BowlBuilder({ whatsapp }: { whatsapp: string }) {
               </div>
               {outside ? (
                 <p className="mt-4 rounded-2xl bg-[#FFF1E8] p-4 text-sm leading-6 text-[#8A3A00]">
-                  We only deliver to PIN {SERVED_PIN} right now. Send us a message with your name and location and we will reply if we can reach you.
+                  This is farther than 7 km from Madhapur. Send us a message with your name and location and we will reply if we can reach you.
                 </p>
               ) : null}
             </Step>

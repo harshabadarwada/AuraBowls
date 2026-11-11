@@ -3,9 +3,9 @@ import { dietLabel, formatInr } from "@/lib/format";
 import { publicSiteUrl } from "@/lib/site";
 
 export const brand = "AuraBowls";
-export const servedPin = "500081";
-export const servedAreas = ["Madhapur", "Hitech City"];
-export const servedLabel = "Madhapur and nearby areas, PIN 500081, including Hitech City, Hyderabad";
+export const servedPin = "";
+export const servedAreas = ["Madhapur"];
+export const servedLabel = "Madhapur, Hyderabad, within 7 km";
 export const businessPhone = "+91-9652148800";
 export const businessPhoneDisplay = "+91 96521 48800";
 export const shareImage = "/bowls/paneer-power-bowl.jpg";
@@ -101,7 +101,6 @@ export function businessJsonLd() {
       "@type": "PostalAddress",
       addressLocality: "Madhapur",
       addressRegion: "Telangana",
-      postalCode: servedPin,
       addressCountry: "IN",
     },
     areaServed: servedAreas.map((name) => ({ "@type": "Place", name: `${name}, Hyderabad` })),
@@ -228,7 +227,7 @@ export function howToBuildJsonLd() {
       { "@type": "HowToStep", position: 3, name: "Add protein by portion", text: "Paneer, tofu, soya or chickpeas for veg. Grilled chicken, crispy chicken or boiled eggs for non-veg. ₹40, ₹80 or ₹120 for one to three portions." },
       { "@type": "HowToStep", position: 4, name: "Choose veggies and a sauce", text: "Up to four veggies and one sauce, included in the base price." },
       { "@type": "HowToStep", position: 5, name: "Add extras if you want", text: "Cheese, sprouts, extra sauce or extra egg at ₹40. Extra paneer, avocado or extra chicken at ₹50." },
-      { "@type": "HowToStep", position: 6, name: "Send on WhatsApp", text: "Enter your name, address and PIN. PIN 500081 continues the order. Any other PIN sends a location enquiry." },
+      { "@type": "HowToStep", position: 6, name: "Send on WhatsApp", text: "Enter your name and address. We deliver within 7 km of Madhapur. Farther addresses send a location enquiry." },
     ],
   };
 }

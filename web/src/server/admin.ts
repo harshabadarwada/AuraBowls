@@ -446,6 +446,8 @@ export async function saveSettings(actor: string, input: Record<string, string>)
       taxLabel: "",
       dinnerEnabled: input.dinnerEnabled === "on" || input.dinnerEnabled === "true",
       proteinGoalMinG: Number(input.proteinGoalMinG || 25),
+      sheetsSpreadsheetId: (input.sheetsSpreadsheetId || "").trim(),
+      sheetsWebhookUrl: (input.sheetsWebhookUrl || "").trim(),
       sheetsSyncEnabled: input.sheetsSyncEnabled === "on" || input.sheetsSyncEnabled === "true",
       operatingWeekdays: input.operatingWeekdays.trim() || "1,2,3,4,5,6",
     },

@@ -6,13 +6,13 @@ describe("WhatsApp identity", () => {
     const text = guideOrderText({
       name: "Meera Rao",
       address: "Flat 12, Madhapur",
-      pin: "500081",
+      pin: "Madhapur 7km",
       goalLabel: "Fat loss",
       lines: [{ name: "Paneer Power Bowl", quantity: 1, pricePaise: 26000 }],
     });
     expect(text).toContain("Name: Meera Rao");
     expect(text).toContain("Address: Flat 12, Madhapur");
-    expect(text).toContain("PIN: 500081");
+    expect(text).toContain("Area: Madhapur, within 7 km");
     expect(text.indexOf("Name:")).toBeLessThan(text.indexOf("Bowls each day:"));
   });
 
@@ -20,8 +20,8 @@ describe("WhatsApp identity", () => {
     const text = outsideAreaText({ name: "Arun", address: "Gachibowli road", pin: "500032" });
     expect(text).toContain("Name: Arun");
     expect(text).toContain("Address: Gachibowli road");
-    expect(text).toContain("PIN: 500032");
-    expect(text).toContain("outside PIN 500081");
+    expect(text).toContain("Area: 500032");
+    expect(text).toContain("more than 7 km from Madhapur");
     expect(menuOrderText({ name: "Arun", address: "Gachibowli road", pin: "500032", lines: [] })).toBe(text);
   });
 
@@ -29,7 +29,7 @@ describe("WhatsApp identity", () => {
     const text = planOrderText({
       name: "Meera Rao",
       address: "Flat 12, Madhapur",
-      pin: "500081",
+      pin: "Madhapur 7km",
       planName: "Weekday Breakfast",
       lines: [{ date: "2026-10-28", mealName: "Mango Coconut Overnight Oats", slotLabel: "7:30–9:00" }],
       totalPaise: 104500,
@@ -45,7 +45,7 @@ describe("WhatsApp identity", () => {
     const text = guideOrderText({
       name: "Meera Rao",
       address: "Flat 12, Madhapur",
-      pin: "500081",
+      pin: "Madhapur 7km",
       goalLabel: "Fat loss",
       lines: [{ name: "Mango Coconut Overnight Oats", quantity: 1, pricePaise: 22000 }],
       subscription: {
@@ -64,7 +64,7 @@ describe("WhatsApp identity", () => {
     expect(text).toContain("Delivery: Breakfast 7:30–9:00");
     expect(text).toContain("Total: ₹1,045.00");
     expect(text).toContain("Delivery charges vary by location");
-    expect(text).toContain("PIN: 500081");
+    expect(text).toContain("Area: Madhapur, within 7 km");
     expect(text.indexOf("Name:")).toBeLessThan(text.indexOf("Subscription:"));
   });
 
@@ -72,7 +72,7 @@ describe("WhatsApp identity", () => {
     const text = guideOrderText({
       name: "Meera Rao",
       address: "Flat 12, Madhapur",
-      pin: "500081",
+      pin: "Madhapur 7km",
       goalLabel: "Fat loss",
       lines: [],
       days: [

@@ -3,11 +3,14 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { readDraft, readPerson, writeDraft, writePerson, type DraftSelection } from "@/components/draft";
+import { readDraft, readPerson, SERVED_PIN, writeDraft, writePerson, type DraftSelection } from "@/components/draft";
 import { MealPhoto } from "@/components/meal-card";
+import { isServedArea } from "@/lib/area";
 import { formatInr } from "@/lib/format";
-import { planOrderText, whatsappHref } from "@/lib/order-message";
+import { outsideAreaText, planOrderText, whatsappHref } from "@/lib/order-message";
 import type { PublicMeal } from "@/server/catalog";
+
+const INTERNAL_PIN = "500081";
 
 type Slot = { id: string; label: string; startTime: string; mealType: "breakfast" | "lunch" };
 type Scope = "breakfast" | "lunch" | "both";
@@ -79,6 +82,7 @@ export function PlanBuilder({ plan, meals, slots, options, whatsapp }: { plan: P
   const lunchDefault = meals.find((meal) => meal.slug === plan.companionMealSlug);
   const [startDate, setStartDate] = useState(kolkataTomorrow);
   const [pinCode, setPinCode] = useState("");
+  const [inArea, setInArea] = useState<boolean | null>(null);
   const [breakfastSlotId, setBreakfastSlotId] = useState(breakfastSlots[0]?.id || "");
   const [lunchSlotId, setLunchSlotId] = useState(lunchSlots[0]?.id || slots[0]?.id || "");
   const [rows, setRows] = useState<DraftSelection[]>([]);
@@ -106,11 +110,20 @@ export function PlanBuilder({ plan, meals, slots, options, whatsapp }: { plan: P
     const person = readPerson();
     setCustomerName(person.name);
     setAddress(person.address);
-    if (person.pin === "500081") setPinCode(person.pin);
+    if (isServedArea(person.pin)) {
+      setPinCode(INTERNAL_PIN);
+      setInArea(true);
+    } else if (person.pin) {
+      setPinCode(person.pin);
+      setInArea(false);
+    }
     const draft = readDraft();
     if (!draft || draft.planSlug !== plan.slug || draft.selections.length === 0) return;
     setStartDate(draft.startDate || kolkataTomorrow());
-    setPinCode(draft.pinCode);
+    if (isServedArea(draft.pinCode) || draft.pinCode === INTERNAL_PIN) {
+      setPinCode(INTERNAL_PIN);
+      setInArea(true);
+    }
     const known = new Map(slots.map((slot) => [slot.id, slot.mealType]));
     const firstBreakfast = draft.selections.find((row) => known.get(row.slotId) !== "lunch");
     const firstLunch = draft.selections.find((row) => known.get(row.slotId) === "lunch");
@@ -122,7 +135,7 @@ export function PlanBuilder({ plan, meals, slots, options, whatsapp }: { plan: P
   }, [plan.slug, plan.mealType, slots]);
 
   useEffect(() => {
-    if (rows.length === 0 || !/^\d{6}$/.test(pinCode)) return;
+    if (rows.length === 0 || pinCode !== INTERNAL_PIN) return;
     const handle = window.setTimeout(async () => {
       try {
         const data = await postJson("/api/quote", { mode: "plan", planSlug: plan.slug, mealType: plan.mealType, startDate, pinCode, couponCode: "", selections: rows });
@@ -197,12 +210,15 @@ export function PlanBuilder({ plan, meals, slots, options, whatsapp }: { plan: P
   }
 
   const sitting = plan.mealType === "both" ? `${dayCount} days · breakfast and lunch` : `${dayCount} ${plan.mealType} ${dayCount === 1 ? "delivery" : "deliveries"}`;
-  const personReady = customerName.trim().length >= 2 && address.trim().length >= 4 && pinCode === "500081";
+  const personReady = customerName.trim().length >= 2 && address.trim().length >= 4 && inArea === true;
+  const outsideHref = inArea === false && customerName.trim().length >= 2 && address.trim().length >= 4
+    ? whatsappHref(whatsapp, outsideAreaText({ name: customerName.trim(), address: address.trim(), pin: pinCode }))
+    : "";
   const planHref = orderOnWhatsapp && quote && rows.length > 0 && personReady
     ? whatsappHref(whatsapp, planOrderText({
       name: customerName.trim(),
       address: address.trim(),
-      pin: pinCode,
+      pin: SERVED_PIN,
       planName: plan.name,
       totalPaise: quote.totalPaise,
       lines: rows.map((row) => ({ date: row.date, mealName: mealById.get(row.mealId)?.name || "Meal", slotLabel: slotById.get(row.slotId)?.label || "" })),
@@ -234,7 +250,7 @@ export function PlanBuilder({ plan, meals, slots, options, whatsapp }: { plan: P
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#6A5A4E]">{cadenceLabel(plan.cadence)}</p>
           <p className="display mt-1 text-5xl text-[#F15C00]">{mealsFrom === null ? "—" : formatInr(mealsFrom)}</p>
-          <p className="mt-1 text-sm text-[#6A5A4E]">{sitting}. {plan.discountBps > 0 ? `${plan.discountBps / 100}% off each default meal. ` : "Menu price. "}Delivery is added from the PIN{plan.mealType === "both" ? ", once for each drop" : ""}.</p>
+          <p className="mt-1 text-sm text-[#6A5A4E]">{sitting}. {plan.discountBps > 0 ? `${plan.discountBps / 100}% off each default meal. ` : "Menu price. "}Delivery is within 7 km of Madhapur{plan.mealType === "both" ? ", once for each drop" : ""}.</p>
         </div>
         <div className="flex gap-4 text-sm font-semibold">
           {lengths.map((option) => (
@@ -249,17 +265,28 @@ export function PlanBuilder({ plan, meals, slots, options, whatsapp }: { plan: P
         <label className="min-w-[11rem] flex-1 text-sm font-semibold text-[#1A4A16]">First day
           <input className="field mt-1" type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} />
         </label>
-        <label className="min-w-[11rem] flex-1 text-sm font-semibold text-[#1A4A16]">PIN code
-          <input className="field mt-1" inputMode="numeric" maxLength={6} value={pinCode} placeholder="6 digits" onChange={(event) => setPinCode(event.target.value.replace(/\D/g, "").slice(0, 6))} />
-        </label>
+        <div className="min-w-[11rem] flex-1 text-sm font-semibold text-[#1A4A16]">Delivery area
+          <div className="mt-1 flex flex-wrap gap-2">
+            <button type="button" className={`chip ${inArea === true ? "chip-on" : ""}`} onClick={() => { setInArea(true); setPinCode(INTERNAL_PIN); writePerson({ name: customerName, address, pin: SERVED_PIN }); }}>Within 7 km of Madhapur</button>
+            <button type="button" className={`chip ${inArea === false ? "chip-on" : ""}`} onClick={() => { setInArea(false); setPinCode(""); }}>Farther than 7 km</button>
+          </div>
+        </div>
         {plan.mealType !== "lunch" ? (
           <SlotField label="Morning slot" value={breakfastSlotId} slots={breakfastSlots} onChange={setBreakfastSlotId} />
         ) : null}
         {plan.mealType !== "breakfast" ? (
           <SlotField label="Afternoon slot" value={lunchSlotId} slots={lunchSlots} onChange={setLunchSlotId} />
         ) : null}
-        <button className="btn btn-forest shrink-0" type="button" disabled={busy || pinCode.length !== 6} onClick={layOutDays}>{busy ? "Asking the kitchen…" : rows.length ? "Refresh the days" : "Lay out the days"}</button>
+        <button className="btn btn-forest shrink-0" type="button" disabled={busy || inArea !== true} onClick={layOutDays}>{busy ? "Asking the kitchen…" : rows.length ? "Refresh the days" : "Lay out the days"}</button>
       </section>
+      {inArea === false ? (
+        <div className="mt-3 max-w-xl">
+          <label className="block text-sm font-semibold text-[#1A4A16]">Your area
+            <input className="field mt-1" value={pinCode === INTERNAL_PIN ? "" : pinCode} placeholder="Neighbourhood or landmark" onChange={(event) => setPinCode(event.target.value)} />
+          </label>
+          {outsideHref ? <a className="btn btn-accent mt-4" href={outsideHref} target="_blank" rel="noreferrer" onClick={() => writePerson({ name: customerName.trim(), address: address.trim(), pin: pinCode })}>Send my location on WhatsApp</a> : <p className="mt-3 text-sm text-[#6A5A4E]">Add your name and address below, then this sends an enquiry.</p>}
+        </div>
+      ) : null}
       {error ? <p className="mt-3 rounded-2xl bg-[#fff1e8] px-3 py-2 text-sm text-[#7a3410]" role="alert">{error}</p> : null}
       {note ? <p className="mt-3 text-xs leading-5 text-[#6A5A4E]">{note}</p> : null}
 
@@ -329,10 +356,10 @@ export function PlanBuilder({ plan, meals, slots, options, whatsapp }: { plan: P
         {orderOnWhatsapp ? (
           <div className="w-full max-w-sm">
             <label className="block text-sm font-semibold text-[#1A4A16]">Name
-              <input className="field mt-1" value={customerName} onChange={(event) => { setCustomerName(event.target.value); writePerson({ name: event.target.value, address, pin: pinCode }); }} />
+              <input className="field mt-1" value={customerName} onChange={(event) => { setCustomerName(event.target.value); writePerson({ name: event.target.value, address, pin: inArea ? SERVED_PIN : pinCode }); }} />
             </label>
             <label className="mt-3 block text-sm font-semibold text-[#1A4A16]">Address
-              <input className="field mt-1" value={address} onChange={(event) => { setAddress(event.target.value); writePerson({ name: customerName, address: event.target.value, pin: pinCode }); }} placeholder="Flat, street, area" />
+              <input className="field mt-1" value={address} onChange={(event) => { setAddress(event.target.value); writePerson({ name: customerName, address: event.target.value, pin: inArea ? SERVED_PIN : pinCode }); }} placeholder="Flat, street, area" />
             </label>
             {planHref ? <a className="btn btn-accent mt-4 w-full" href={planHref} target="_blank" rel="noreferrer">Send this plan on WhatsApp</a> : <p className="mt-3 text-sm text-[#6A5A4E]">Add your name and address. The message includes both, plus the days and the total.</p>}
           </div>

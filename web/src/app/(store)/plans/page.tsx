@@ -1,22 +1,21 @@
 import type { Metadata } from "next";
-import { GoalPlanner } from "@/components/goal-planner";
+import { SubscribeFlow } from "@/components/subscribe-flow";
 import { businessWhatsapp } from "@/lib/order-message";
 import { JsonLd, breadcrumbJsonLd, pageMeta } from "@/lib/seo";
-import { getSettings, listMeals } from "@/server/catalog";
+import { getSettings } from "@/server/catalog";
 
 export const metadata: Metadata = pageMeta({
-  title: "Meal Plans in Madhapur",
-  description: "Breakfast and lunch meal plans delivered in Madhapur PIN 500081. One day, five weekdays at 5% off, or twenty weekdays at 10% off the menu price. Pick each day's bowl. Order on WhatsApp.",
+  title: "Lunch Meal Plans in Madhapur",
+  description: "Aura Bowls lunch subscriptions within 7 km of Madhapur. 3, 5, 10, 20 or 22 days as Pure Veg, Pure Non-Veg or Mixed. After-discount prices from ₹630. Fill the order sheet and send it on WhatsApp. Daily changes show on Sheet update.",
   path: "/plans",
 });
 
 export default async function PlansPage() {
-  const meals = await listMeals();
   const settings = await getSettings().catch(() => null);
   return (
     <>
       <JsonLd data={breadcrumbJsonLd([{ name: "Home", path: "/" }, { name: "Meal plans", path: "/plans" }])} />
-      <GoalPlanner meals={meals} whatsapp={businessWhatsapp(settings?.supportWhatsapp || "")} />
+      <SubscribeFlow whatsapp={businessWhatsapp(settings?.supportWhatsapp || "")} />
     </>
   );
 }

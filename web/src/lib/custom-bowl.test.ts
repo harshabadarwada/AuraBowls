@@ -35,7 +35,7 @@ describe("custom bowl pricing", () => {
   });
 
   it("writes an unpaid WhatsApp order with name, address and delivery note", () => {
-    const text = customBowlText({ name: "Asha", address: "Flat 2, Madhapur", pin: "500081", bowl });
+    const text = customBowlText({ name: "Asha", address: "Flat 2, Madhapur", pin: "Madhapur 7km", bowl });
     expect(text).toContain("Name: Asha");
     expect(text).toContain("Address: Flat 2, Madhapur");
     expect(text).toContain("Protein: Grilled chicken × 2 portions");
@@ -45,6 +45,6 @@ describe("custom bowl pricing", () => {
   });
 
   it("sends outside-area visitors the enquiry message", () => {
-    expect(customBowlText({ name: "Ravi", address: "Kukatpally", pin: "500072", bowl })).toContain("outside PIN 500081");
+    expect(customBowlText({ name: "Ravi", address: "Kukatpally", pin: "500072", bowl })).toContain("more than 7 km from Madhapur");
   });
 });

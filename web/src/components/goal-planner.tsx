@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { readPerson, SERVED_PIN, writePerson } from "@/components/draft";
+import { isServedArea } from "@/lib/area";
 import { BowlTile } from "@/components/bowl-tile";
 import { formatInr } from "@/lib/format";
 import { bodyMassIndex, bodyMassLabel, suggestIntake, type Activity, type BodyGoal, type Sex } from "@/lib/guidance";
@@ -98,7 +99,6 @@ export function GoalPlanner({ meals, whatsapp }: { meals: PublicMeal[]; whatsapp
   const [inArea, setInArea] = useState<boolean | null>(null);
   const [error, setError] = useState("");
   const [askSend, setAskSend] = useState(false);
-  const [confirmPin, setConfirmPin] = useState("");
   const [days, setDays] = useState<DayPick[]>([]);
   const [activeDate, setActiveDate] = useState("");
   const [picking, setPicking] = useState<"breakfast" | "lunch">("breakfast");
@@ -107,6 +107,7 @@ export function GoalPlanner({ meals, whatsapp }: { meals: PublicMeal[]; whatsapp
     setName(person.name);
     setAddress(person.address);
     setPin(person.pin);
+    setInArea(person.pin ? isServedArea(person.pin) : null);
   }, []);
 
   const numbers = {
@@ -148,10 +149,9 @@ export function GoalPlanner({ meals, whatsapp }: { meals: PublicMeal[]; whatsapp
   const person = { name: name.trim(), address: address.trim(), pin: pin.trim() };
   const identified = person.name.length >= 2 && person.address.length >= 4;
   const outsideHref = identified ? whatsappHref(whatsapp, outsideAreaText(person)) : "";
-  const confirmPerson = { name: name.trim(), address: address.trim(), pin: confirmPin.trim() };
-  const pinReady = /^\d{6}$/.test(confirmPerson.pin);
-  const sendReady = confirmPerson.name.length >= 2 && confirmPerson.address.length >= 4 && pinReady;
-  const sendOutside = pinReady && confirmPerson.pin !== SERVED_PIN;
+  const confirmPerson = { name: name.trim(), address: address.trim(), pin: inArea ? SERVED_PIN : pin.trim() };
+  const sendReady = confirmPerson.name.length >= 2 && confirmPerson.address.length >= 4 && inArea !== null && (inArea || confirmPerson.pin.length >= 3);
+  const sendOutside = inArea === false;
   const orderText = guideOrderText({
     ...confirmPerson,
     goalLabel,
@@ -171,7 +171,7 @@ export function GoalPlanner({ meals, whatsapp }: { meals: PublicMeal[]; whatsapp
 
   function savePlace(nextInArea: boolean) {
     if (!identified) return setError("Enter your name and address so we know who to reply to.");
-    if (!nextInArea && pin.trim().length < 6 && address.trim().length < 4) return setError("Tell us the area or PIN where you are.");
+    if (!nextInArea && pin.trim().length < 3) return setError("Tell us the area where you are.");
     setError("");
     const next = { name: person.name, address: person.address, pin: nextInArea ? SERVED_PIN : pin.trim() };
     writePerson(next);
@@ -241,8 +241,8 @@ export function GoalPlanner({ meals, whatsapp }: { meals: PublicMeal[]; whatsapp
       {step === "place" ? (
         <section className="mx-auto max-w-xl">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#1A4A16]">Delivery</p>
-          <h1 className="display mt-3 text-4xl leading-[1.05] text-[#1A4A16] sm:text-5xl">We deliver in PIN 500081.</h1>
-          <p className="mt-3 text-sm leading-7 text-[#6A5A4E]">Madhapur and Hitech City. If you are there, continue. If you are somewhere else, send your name and address on WhatsApp and we will reply.</p>
+          <h1 className="display mt-3 text-4xl leading-[1.05] text-[#1A4A16] sm:text-5xl">We deliver within 7 km of Madhapur.</h1>
+          <p className="mt-3 text-sm leading-7 text-[#6A5A4E]">If you are inside that radius, continue. If you are farther, send your name and address on WhatsApp and we will reply.</p>
           <label className="mt-6 block text-sm font-semibold text-[#1A4A16]">Name
             <input className="field mt-1" value={name} onChange={(event) => setName(event.target.value)} placeholder="Your name" />
           </label>
@@ -250,12 +250,12 @@ export function GoalPlanner({ meals, whatsapp }: { meals: PublicMeal[]; whatsapp
             <input className="field mt-1" value={address} onChange={(event) => setAddress(event.target.value)} placeholder="Flat, street, area" />
           </label>
           <div className="mt-4 flex flex-wrap gap-2">
-            <button type="button" className={`chip ${inArea === true ? "chip-on" : ""}`} onClick={() => savePlace(true)}>I am in 500081</button>
-            <button type="button" className={`chip ${inArea === false ? "chip-on" : ""}`} onClick={() => { setInArea(false); setError(""); }}>I am somewhere else</button>
+            <button type="button" className={`chip ${inArea === true ? "chip-on" : ""}`} onClick={() => savePlace(true)}>I am within 7 km of Madhapur</button>
+            <button type="button" className={`chip ${inArea === false ? "chip-on" : ""}`} onClick={() => { setInArea(false); setError(""); }}>I am farther than 7 km</button>
           </div>
           {inArea === false ? (
-            <label className="mt-4 block text-sm font-semibold text-[#1A4A16]">Your PIN or area
-              <input className="field mt-1" value={pin} onChange={(event) => setPin(event.target.value)} placeholder="PIN or neighbourhood" />
+            <label className="mt-4 block text-sm font-semibold text-[#1A4A16]">Your area
+              <input className="field mt-1" value={pin} onChange={(event) => setPin(event.target.value)} placeholder="Neighbourhood or landmark" />
             </label>
           ) : null}
           {error ? <p className="mt-3 text-sm text-[#7a3410]" role="alert">{error}</p> : null}
@@ -313,7 +313,7 @@ export function GoalPlanner({ meals, whatsapp }: { meals: PublicMeal[]; whatsapp
         <section className="mx-auto max-w-xl">
           <button type="button" className="text-sm font-semibold text-[#1A4A16]" onClick={() => setStep(goal === "eat_healthy" ? "goal" : "measure")}>Back</button>
           <h1 className="display mt-3 text-4xl text-[#1A4A16]">{estimate?.ok ? `${name.trim()}, here is the suggestion.` : name.trim() ? `${name.trim()}, next is the subscription.` : "What should we call you?"}</h1>
-          <p className="mt-2 text-sm text-[#6A5A4E]">{address.trim()} · PIN {SERVED_PIN}</p>
+          <p className="mt-2 text-sm text-[#6A5A4E]">{address.trim()} · Madhapur, within 7 km</p>
           {estimate && estimate.ok ? (
             <div className="mt-5 rounded-[28px] bg-[#1A4A16] p-6 text-white">
               <p className="text-xs uppercase tracking-[0.14em] text-white/70">{goalLabel} · BMI {estimate.bmi}</p>
@@ -421,15 +421,12 @@ export function GoalPlanner({ meals, whatsapp }: { meals: PublicMeal[]; whatsapp
               <label className="mt-3 block text-sm font-semibold">Address
                 <input className="field mt-1" value={address} onChange={(event) => setAddress(event.target.value)} placeholder="Flat, street, area" />
               </label>
-              <label className="mt-3 block text-sm font-semibold">PIN code
-                <input className="field mt-1" inputMode="numeric" maxLength={6} value={confirmPin} onChange={(event) => setConfirmPin(event.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="500081" />
-              </label>
               <p className="mt-3 text-sm leading-6 text-[#6A5A4E]">Delivery charges vary by location and are not included in {formatInr(priced.totalPaise)}. The kitchen confirms the charge on WhatsApp.</p>
-              {sendOutside ? <p className="mt-2 text-sm text-[#7a3410]">PIN {confirmPerson.pin} is outside 500081. This sends your name and address so we can reply.</p> : null}
+              {sendOutside ? <p className="mt-2 text-sm text-[#7a3410]">This address is farther than 7 km from Madhapur. This sends your name and address so we can reply.</p> : null}
               {href ? (
                 <a className="btn btn-accent mt-4 w-full" href={href} target="_blank" rel="noreferrer" onClick={() => writePerson(confirmPerson)}>Send on WhatsApp</a>
               ) : (
-                <p className="mt-3 text-sm text-[#6A5A4E]">Enter your name, address, and a 6-digit PIN. WhatsApp stays closed until those are filled in.</p>
+                <p className="mt-3 text-sm text-[#6A5A4E]">Enter your name and address. WhatsApp stays closed until those are filled in.</p>
               )}
               <button type="button" className="mt-3 text-sm font-semibold text-[#1A4A16]" onClick={() => setAskSend(false)}>Back to bowls</button>
             </div>
@@ -437,7 +434,7 @@ export function GoalPlanner({ meals, whatsapp }: { meals: PublicMeal[]; whatsapp
             <div className="fixed inset-x-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-30 flex items-center justify-between gap-3 rounded-full bg-[#1A4A16] px-4 py-2 text-white md:bottom-6">
               <div>
                 <p className="text-[11px] uppercase tracking-wide text-white/70">{filled}/{days.length} days · {formatInr(priced.totalPaise)} · delivery extra</p>
-                <p className="text-sm">{bowlsReady ? "PIN is checked next" : "Choose a bowl for each day"}</p>
+                <p className="text-sm">{bowlsReady ? "Name and address are checked next" : "Choose a bowl for each day"}</p>
               </div>
               <button type="button" className="btn btn-accent" disabled={!bowlsReady} onClick={() => setAskSend(true)}>Send on WhatsApp</button>
             </div>

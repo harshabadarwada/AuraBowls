@@ -20,7 +20,7 @@ const typeCopy = {
   dinner: {
     title: "Dinner Bowls in Madhapur",
     heading: "Dinner",
-    description: "Dinner is not open yet at Aura Bowls. Breakfast and lunch are available in Madhapur PIN 500081.",
+    description: "Dinner is not open yet at Aura Bowls. Breakfast and lunch are available within 7 km of Madhapur.",
   },
 } as const;
 
@@ -45,7 +45,7 @@ export default async function MealTypePage({ params }: { params: Promise<{ type:
     return (
       <>
         <JsonLd data={breadcrumbJsonLd([{ name: "Home", path: "/" }, { name: "Menu", path: "/menu" }, { name: "Dinner", path: "/menu/dinner" }])} />
-        <Stage eyebrow="Coming soon" title="Dinner is not open yet" copy="Breakfast and lunch are available in Madhapur PIN 500081. Dinner appears here after it is enabled in admin settings and meals are published." />
+        <Stage eyebrow="Coming soon" title="Dinner is not open yet" copy="Breakfast and lunch are available within 7 km of Madhapur. Dinner appears here after it is enabled in admin settings and meals are published." />
       </>
     );
   }

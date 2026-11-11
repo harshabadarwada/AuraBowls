@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { Stage } from "@/components/stage";
-import { JsonLd, breadcrumbJsonLd, businessPhoneDisplay, pageMeta, servedPin } from "@/lib/seo";
+import { JsonLd, breadcrumbJsonLd, businessPhoneDisplay, pageMeta } from "@/lib/seo";
 
 export const metadata: Metadata = pageMeta({
   title: "About Aura Bowls Hyderabad",
-  description: "Aura Bowls is a healthy meal kitchen in Madhapur, Hyderabad. We cook protein bowls, oats, salads and juices for PIN 500081, including Hitech City. We are not the singing-bowl shop at aurabowls.com.",
+  description: "Aura Bowls is a healthy meal kitchen in Madhapur, Hyderabad. We cook protein bowls, oats, salads and juices within 7 km of Madhapur, including Hitech City. We are not the singing-bowl shop at aurabowls.com.",
   path: "/about",
 });
 
@@ -14,10 +14,10 @@ export default function AboutPage() {
       <JsonLd data={breadcrumbJsonLd([{ name: "Home", path: "/" }, { name: "About", path: "/about" }])} />
       <Stage eyebrow="AuraBowls · Madhapur" title="About" copy="Fresh breakfast and lunch bowls for everyday living in Madhapur. Dinner stays closed until the kitchen opens it." />
       <p className="max-w-2xl leading-7 text-[#6A5A4E]">
-        Aura Bowls cooks veg and non-veg protein bowls, healthy biryani bowls, overnight oats, salads, juices, buttermilk and bites, then delivers them in Madhapur and nearby PIN {servedPin}, including Hitech City. You can browse the menu before sharing a phone number. A PIN check happens when an order starts, and the full address is checked again before the kitchen confirms.
+        Aura Bowls cooks veg and non-veg protein bowls, healthy biryani bowls, overnight oats, salads, juices, buttermilk and bites, then delivers them within 7 km of Madhapur, including nearby Hitech City. You can browse the menu before sharing a phone number. We check the 7 km radius when an order starts, and the full address is checked again before the kitchen confirms.
       </p>
       <p className="max-w-2xl leading-7 text-[#6A5A4E]">
-        Breakfast arrives between 7:30 and 10:30 am and lunch between 12:00 and 3:00 pm, Monday to Saturday. Custom bowls start at ₹120. Meal plans cover one day, five weekdays, or twenty weekdays. Orders go to us on WhatsApp at {businessPhoneDisplay}. Delivery charges vary by location and are not included in menu prices.
+        Breakfast arrives between 7:30 and 10:30 am and lunch between 12:00 and 3:00 pm, Monday to Saturday. Custom bowls start at ₹120. Lunch subscriptions run 3, 5, 10, 20 or 22 days as Pure Veg, Pure Non-Veg or Mixed. Orders go to us on WhatsApp at {businessPhoneDisplay}. Delivery charges vary by location and are not included in menu prices.
       </p>
       <p className="max-w-2xl leading-7 text-[#6A5A4E]">
         We are a food kitchen in Hyderabad. We are not AuraBowls the Tibetan singing-bowl shop, and we are not Aura Cafe in Jubilee Hills.

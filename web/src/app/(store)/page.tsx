@@ -28,18 +28,19 @@ const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri"];
 export const metadata: Metadata = {
   ...pageMeta({
     title: "Protein Bowls Delivered in Madhapur",
-    description: "Aura Bowls delivers veg and non-veg protein bowls, biryani bowls, overnight oats, salads and juices in Madhapur and nearby PIN 500081, Hyderabad. Custom bowls from ₹120. Meal plans for breakfast and lunch. Order on WhatsApp.",
+    description: "Aura Bowls delivers veg and non-veg protein bowls, biryani bowls, overnight oats, salads and juices within 7 km of Madhapur, Hyderabad. Custom bowls from ₹120. Meal plans for breakfast and lunch. Order on WhatsApp.",
     path: "/",
   }),
   title: { absolute: "Protein Bowls Delivered in Madhapur | Aura Bowls Hyderabad" },
 };
 
 const faqs = [
-  { q: "Where does AuraBowls deliver?", a: "We deliver in Madhapur and nearby areas, PIN 500081, including Hitech City. If you are outside this PIN, send your address on WhatsApp and we will reply." },
+  { q: "Where does AuraBowls deliver?", a: "We deliver within 7 km of Madhapur, including nearby Hitech City. If you are farther than 7 km, send your address on WhatsApp and we will reply." },
   { q: "How do I order?", a: "Add bowls from the menu or pick a meal plan, then send the order on WhatsApp. We reply on that chat with the total and a payment QR. You pay only after that." },
   { q: "Do you have veg and non-veg bowls?", a: "Yes. Veg bowls use paneer, tofu, soya chunks or chickpeas. Non-veg bowls use grilled chicken, crispy chicken or eggs." },
   { q: "Can I build my own bowl?", a: "Yes. A custom bowl starts at ₹120 with a base, veggies and a sauce. Protein is ₹40 per portion, up to three portions, and extras are ₹40 or ₹50 each." },
-  { q: "What meal plans do you offer?", a: "Breakfast, lunch, or both. Choose a single day, five weekdays at 5% off, or twenty weekdays at 10% off the menu price of the default meals, and pick each day's bowl yourself." },
+  { q: "What meal plans do you offer?", a: "Lunch subscriptions for 3, 5, 10, 20 or 22 days, as Pure Veg, Pure Non-Veg or Mixed. Those totals are after discount, from ₹630. You fill a named order sheet, send it on WhatsApp unpaid, then open Sheet update before 8:00 AM only if that day's bowl should change." },
+  { q: "Where do sheet updates show?", a: "Daily bowl changes show on the Sheet update page, linked in the header and footer as Sheet update. They are not edited on the original plan sheet after you send it. Send the daily kitchen sheet on WhatsApp before 8:00 AM." },
   { q: "When are deliveries?", a: "Monday to Saturday. Breakfast arrives between 7:30 and 10:30 am and lunch between 12:00 and 3:00 pm. You choose the slot when you order." },
   { q: "Is delivery free?", a: "Delivery charges vary by location and are not included in menu prices. The kitchen confirms the charge on WhatsApp before you pay." },
 ];
@@ -47,7 +48,7 @@ const faqs = [
 const steps = [
   { title: "Choose", copy: "Pick single bowls from the menu, or a plan for the week. You can browse before sharing any details.", icon: "M4 7h16M4 12h10M4 17h7" },
   { title: "Customise", copy: "Set the start date and pick each day's bowl yourself, or take our recommendation.", icon: "M12 4v16M4 12h16" },
-  { title: "Send on WhatsApp", copy: "We check your PIN, confirm the delivery charge for your location, and schedule the kitchen.", icon: "M5 12l4 4L19 6" },
+  { title: "Send on WhatsApp", copy: "We check you are within 7 km of Madhapur, confirm the delivery charge for your location, and schedule the kitchen.", icon: "M5 12l4 4L19 6" },
 ];
 
 function hasPhoto(meal: PublicMeal) {
@@ -83,7 +84,7 @@ export default async function HomePage() {
       <section className="story max-w-3xl">
         <h2 className="display text-3xl leading-[1.08] text-[#1A4A16] sm:text-4xl">Healthy bowls for Madhapur offices and homes.</h2>
         <p className="mt-4 text-sm leading-7 text-[#6A5A4E] sm:text-base">
-          Aura Bowls is a Hyderabad kitchen, not a singing-bowl shop. We cook paneer, chicken, tofu, egg and soya bowls, overnight oats, salads, juices and bites, then deliver them in Madhapur and nearby PIN 500081, including Hitech City. Breakfast lands between 7:30 and 10:30 am, lunch between 12:00 and 3:00 pm, Monday to Saturday. Build a bowl from ₹120, or put breakfast and lunch on a 5-day or 20-day plan. The order goes to us on WhatsApp. Delivery charges vary by location and are confirmed before you pay.
+          Aura Bowls is a Hyderabad kitchen, not a singing-bowl shop. We cook paneer, chicken, tofu, egg and soya bowls, overnight oats, salads, juices and bites, then deliver them within 7 km of Madhapur, including nearby Hitech City. Breakfast lands between 7:30 and 10:30 am, lunch between 12:00 and 3:00 pm, Monday to Saturday. Build a bowl from ₹120, or put lunch on a 3, 5, 10, 20 or 22-day subscription. The named order sheet goes to us on WhatsApp. Daily bowl changes show on Sheet update. Delivery charges vary by location and are confirmed before you pay.
         </p>
       </section>
 

@@ -8,7 +8,7 @@ import { getSettings, listMeals } from "@/server/catalog";
 
 export const metadata: Metadata = pageMeta({
   title: "Healthy Bowl Menu in Madhapur",
-  description: "Full Aura Bowls menu with prices: paneer, chicken, tofu and egg protein bowls, healthy biryani bowls, overnight oats, salads, wellness shots, juices, buttermilk and crispy rolls. Delivered in Madhapur PIN 500081.",
+  description: "Full Aura Bowls menu with prices: paneer, chicken, tofu and egg protein bowls, healthy biryani bowls, overnight oats, salads, wellness shots, juices, buttermilk and crispy rolls. Delivered within 7 km of Madhapur.",
   path: "/menu",
 });
 

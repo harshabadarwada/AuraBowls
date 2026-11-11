@@ -68,7 +68,9 @@ export function writeMenu(lines: MenuLine[]) {
 export type Person = { name: string; address: string; pin: string };
 
 const PERSON_KEY = "aurabowls.person.v1";
-export const SERVED_PIN = "500081";
+import { SERVED_AREA } from "@/lib/area";
+
+export const SERVED_PIN = SERVED_AREA;
 
 export function readPerson(): Person {
   if (typeof window === "undefined") return { name: "", address: "", pin: "" };

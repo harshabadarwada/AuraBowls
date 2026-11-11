@@ -54,7 +54,7 @@ const servedArea = {
   label: "Madhapur and Hitech City",
   deliveryFeePaise: 0,
   coverage: "pin",
-  localityNote: "AuraBowls delivers in PIN 500081. A PIN match is not a promise that every building inside it is served.",
+  localityNote: "AuraBowls delivers within 7 km of Madhapur. Being in the radius is not a promise that every building is served.",
   weekdays: "1,2,3,4,5,6",
   active: true,
 };

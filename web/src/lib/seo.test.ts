@@ -15,7 +15,7 @@ describe("mealBlurb", () => {
     expect(text).toContain("Paneer Power Bowl");
     expect(text).toContain("vegetarian lunch");
     expect(text).toContain("1 bowl, ₹260.00");
-    expect(text).toContain("500081");
+    expect(text).toContain("7 km");
     expect(text).toContain("Madhapur");
     expect(text.toLowerCase()).not.toMatch(/\d+\s*g protein|calories|weight loss|certified/);
   });

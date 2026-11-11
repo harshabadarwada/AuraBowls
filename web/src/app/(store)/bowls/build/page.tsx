@@ -20,7 +20,7 @@ export default async function BuildBowlPage() {
       <Stage
         eyebrow="From ₹120 · Madhapur"
         title="Build Your Own Bowl"
-        copy="Choose veg or non-veg, then a base, protein, veggies, sauce and extras. The price updates as you pick, and the order goes to us on WhatsApp in PIN 500081."
+        copy="Choose veg or non-veg, then a base, protein, veggies, sauce and extras. The price updates as you pick, and the order goes to us on WhatsApp if you are within 7 km of Madhapur."
       />
       <BowlBuilder whatsapp={businessWhatsapp(settings?.supportWhatsapp || "")} />
     </div>

@@ -17,6 +17,7 @@ const primary = [
   { href: "/", label: "Home" },
   { href: "/menu", label: "Menu" },
   { href: "/plans", label: "Meal Plans" },
+  { href: "/plans/tomorrow", label: "Sheet update" },
   { href: "/about", label: "About" },
 ];
 
@@ -77,7 +78,7 @@ function Bag({ count }: { count: number }) {
 export function DeliveryNotice() {
   return (
     <aside className="caution-tape relative z-40 overflow-hidden text-[#111]" aria-label="Delivery area">
-      <p className="sr-only">Caution: we deliver only in Madhapur and nearby areas, PIN 500081.</p>
+      <p className="sr-only">Caution: we deliver within 7 km of Madhapur.</p>
       <div className="caution-track flex w-max py-2" aria-hidden="true">
         {[0, 1].map((copy) => (
           <div key={copy} className="flex shrink-0">
@@ -86,9 +87,7 @@ export function DeliveryNotice() {
                 <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0"><path fill="currentColor" d="M12 2 1 21h22L12 2Zm-1 7h2v6h-2V9Zm0 8h2v2h-2v-2Z" /></svg>
                 Caution
                 <span className="mx-1">·</span>
-                We deliver only in Madhapur &amp; nearby areas
-                <span className="mx-1">·</span>
-                PIN 500081
+                We deliver within 7 km of Madhapur
               </span>
             ))}
           </div>
@@ -245,10 +244,10 @@ export function Footer({ whatsapp }: { whatsapp: string }) {
       <div className="relative mx-auto grid max-w-7xl gap-10 px-5 pb-10 pt-12 sm:px-8 sm:pt-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:gap-16">
         <div>
           <Logo light />
-          <p className="mt-5 max-w-xs text-sm leading-6 text-[#d5e4d8]">Fresh breakfast and lunch bowls for Madhapur and nearby PIN 500081, including Hitech City, Hyderabad.</p>
+          <p className="mt-5 max-w-xs text-sm leading-6 text-[#d5e4d8]">Fresh breakfast and lunch bowls within 7 km of Madhapur, Hyderabad.</p>
         </div>
         <div className="grid grid-cols-2 gap-x-6 gap-y-10 lg:grid-cols-3">
-          <FooterLinks title="Order" links={[["/menu", "Menu"], ["/plans", "Meal plans"], ["/cart", "Cart"], ["/track", "Track an order"]]} />
+          <FooterLinks title="Order" links={[["/menu", "Menu"], ["/plans", "Meal plans"], ["/plans/tomorrow", "Sheet update"], ["/cart", "Cart"], ["/track", "Track an order"]]} />
           <FooterLinks title="Policies" links={[["/privacy", "Privacy"], ["/terms", "Terms"], ["/refund-policy", "Cancellation and refunds"], ["/about", "About"]]} />
           <div className="col-span-2 rounded-[22px] bg-white/[0.06] p-5 ring-1 ring-white/10 lg:col-span-1 lg:bg-transparent lg:p-0 lg:ring-0">
             <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/60">Support</h2>
@@ -267,7 +266,7 @@ export function Footer({ whatsapp }: { whatsapp: string }) {
         </div>
       </div>
       <div className="relative mx-auto flex max-w-7xl flex-col-reverse items-center gap-5 border-t border-white/10 px-5 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-6 sm:flex-row sm:justify-between sm:px-8 md:pb-8">
-        <p className="text-xs text-white/55">© AuraBowls · Madhapur, Hyderabad 500081</p>
+        <p className="text-xs text-white/55">© AuraBowls · Madhapur, Hyderabad</p>
         <Signature />
       </div>
     </footer>

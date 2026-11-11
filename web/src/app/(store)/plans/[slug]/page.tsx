@@ -43,7 +43,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const description = fallback?.description || plan?.description || name;
   return pageMeta({
     title: `${name} in Madhapur`,
-    description: `${description} Delivered in Madhapur and nearby PIN 500081, Hyderabad. Order on WhatsApp.`,
+    description: `${description} Delivered within 7 km of Madhapur, Hyderabad. Order on WhatsApp.`,
     path: `/plans/${slug}`,
   });
 }

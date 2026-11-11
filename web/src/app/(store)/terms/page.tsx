@@ -12,7 +12,7 @@ export default function TermsPage() {
       <Stage eyebrow="Policies" title="Terms" copy="This is a starter agreement. Have it reviewed before production use." />
       <p>An order is created as pending. Payment confirmation and kitchen acceptance are separate. A successful payment does not by itself mean the kitchen has accepted every delivery.</p>
       <p>Menu prices can change for future orders. An order keeps the prices confirmed at checkout. Plan discounts are calculated from current menu prices of the default meals and are shown before payment.</p>
-      <p>Delivery is limited to configured service areas. A PIN match follows the coverage rule stored for that PIN. It is not a promise that every address inside a broader area is served when coverage is more specific.</p>
+      <p>Delivery is limited to within 7 km of Madhapur. Being in that radius is not a promise that every address is served. Farther addresses can send an enquiry on WhatsApp.</p>
     </article>
   );
 }

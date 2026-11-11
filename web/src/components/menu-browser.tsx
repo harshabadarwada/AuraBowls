@@ -132,6 +132,7 @@ function BasketBar({ lines, whatsapp }: { lines: MenuLine[]; whatsapp: string })
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
   const [pin, setPin] = useState("");
+  const [inArea, setInArea] = useState<boolean | null>(null);
   useEffect(() => {
     const person = readPerson();
     setName(person.name);
@@ -140,9 +141,9 @@ function BasketBar({ lines, whatsapp }: { lines: MenuLine[]; whatsapp: string })
   const count = lines.reduce((sum, line) => sum + line.quantity, 0);
   const total = lines.reduce((sum, line) => sum + line.pricePaise * line.quantity, 0);
   if (count === 0) return null;
-  const person = { name: name.trim(), address: address.trim(), pin: pin.trim() };
-  const ready = person.name.length >= 2 && person.address.length >= 4 && /^\d{6}$/.test(person.pin);
-  const outside = ready && person.pin !== SERVED_PIN;
+  const person = { name: name.trim(), address: address.trim(), pin: inArea ? SERVED_PIN : pin.trim() };
+  const ready = person.name.length >= 2 && person.address.length >= 4 && inArea !== null && (inArea || person.pin.length >= 3);
+  const outside = inArea === false;
   const href = ready ? whatsappHref(whatsapp, outside ? outsideAreaText(person) : menuOrderText({ ...person, lines })) : "";
   if (ask) {
     return (
@@ -154,15 +155,21 @@ function BasketBar({ lines, whatsapp }: { lines: MenuLine[]; whatsapp: string })
         <label className="mt-3 block text-sm font-semibold">Address
           <input className="field mt-1" value={address} onChange={(event) => setAddress(event.target.value)} placeholder="Flat, street, area" />
         </label>
-        <label className="mt-3 block text-sm font-semibold">PIN code
-          <input className="field mt-1" inputMode="numeric" maxLength={6} value={pin} onChange={(event) => setPin(event.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="500081" />
-        </label>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button type="button" className={`chip ${inArea === true ? "chip-on" : ""}`} onClick={() => setInArea(true)}>Within 7 km of Madhapur</button>
+          <button type="button" className={`chip ${inArea === false ? "chip-on" : ""}`} onClick={() => setInArea(false)}>Farther than 7 km</button>
+        </div>
+        {inArea === false ? (
+          <label className="mt-3 block text-sm font-semibold">Your area
+            <input className="field mt-1" value={pin} onChange={(event) => setPin(event.target.value)} placeholder="Neighbourhood or landmark" />
+          </label>
+        ) : null}
         <p className="mt-3 text-sm leading-6 text-[#6A5A4E]">Delivery charges vary by location and are not included in {formatInr(total)}.</p>
-        {outside ? <p className="mt-2 text-sm text-[#7a3410]">PIN {person.pin} is outside 500081. This sends your name and address so we can reply.</p> : null}
+        {outside ? <p className="mt-2 text-sm text-[#7a3410]">This is farther than 7 km from Madhapur. This sends your name and address so we can reply.</p> : null}
         {href ? (
           <a className="btn btn-accent mt-4 w-full" href={href} target="_blank" rel="noreferrer" onClick={() => writePerson(person)}>Send on WhatsApp</a>
         ) : (
-          <p className="mt-3 text-sm text-[#6A5A4E]">Enter your name, address, and a 6-digit PIN. WhatsApp stays closed until those are filled in.</p>
+          <p className="mt-3 text-sm text-[#6A5A4E]">Enter your name, address, and whether you are within 7 km of Madhapur.</p>
         )}
         <button type="button" className="mt-3 text-sm font-semibold text-[#1A4A16]" onClick={() => setAsk(false)}>Back to the menu</button>
       </div>
