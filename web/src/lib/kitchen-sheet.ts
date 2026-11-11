@@ -106,22 +106,28 @@ export function trackerOrder(input: TrackerOrderInput, at = new Date()): Tracker
   };
 }
 
-export function queueKitchenSheet(input: TrackerOrderInput) {
-  const body = JSON.stringify(input);
+function postQuiet(url: string, body: string, type: string) {
   try {
     if (typeof navigator !== "undefined" && navigator.sendBeacon) {
-      const sent = navigator.sendBeacon("/api/kitchen-sheet", new Blob([body], { type: "application/json" }));
-      if (sent) return true;
+      navigator.sendBeacon(url, new Blob([body], { type }));
     }
   } catch {
     // Fall through to fetch.
   }
-  void fetch("/api/kitchen-sheet", {
+  void fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": type },
     body,
+    mode: url.startsWith("http") ? "no-cors" : "same-origin",
     keepalive: true,
   }).catch(() => false);
+}
+
+export function queueKitchenSheet(input: TrackerOrderInput) {
+  const order = JSON.stringify(trackerOrder(input));
+  const local = JSON.stringify(input);
+  postQuiet(KITCHEN_SHEET_WEBHOOK, order, "text/plain;charset=UTF-8");
+  postQuiet("/api/kitchen-sheet", local, "text/plain;charset=UTF-8");
   return true;
 }
 

@@ -13,36 +13,19 @@ export function kitchenSpreadsheetId(stored = "") {
 
 export async function exportKitchenSheet(input: TrackerOrderInput) {
   const order = trackerOrder(input);
-  const entity = order.orderId;
-  const settings = await db().businessSettings.findUnique({ where: { id: "default" } });
-  const webhook = process.env.GOOGLE_SHEETS_WEBHOOK || settings?.sheetsWebhookUrl || KITCHEN_SHEET_WEBHOOK;
-  if (!webhook) {
-    await db().sheetsSyncLog.create({
-      data: {
-        direction: "db_to_sheet",
-        entity,
-        status: "skipped",
-        detail: "Kitchen sheet webhook is not connected. Paste the Apps Script web app URL in Admin → Settings.",
-      },
-    });
-    return { status: "skipped" as const, orderId: order.orderId };
+  let webhook = process.env.GOOGLE_SHEETS_WEBHOOK || KITCHEN_SHEET_WEBHOOK;
+  try {
+    const settings = await db().businessSettings.findUnique({ where: { id: "default" } });
+    webhook = process.env.GOOGLE_SHEETS_WEBHOOK || settings?.sheetsWebhookUrl || webhook;
+  } catch {
+    // Kitchen logging must not depend on the app database.
   }
+  if (!webhook) return { status: "skipped" as const, orderId: order.orderId };
   try {
     await postWebhook(webhook, order);
-    await db().sheetsSyncLog.create({
-      data: { direction: "db_to_sheet", entity, status: "exported", detail: `Logged ${order.customerName} on Subscription Orders.` },
-    });
     return { status: "exported" as const, orderId: order.orderId };
   } catch (error) {
-    await db().sheetsSyncLog.create({
-      data: {
-        direction: "db_to_sheet",
-        entity,
-        status: "failed",
-        detail: error instanceof Error ? error.message : "Kitchen sheet sync failed",
-      },
-    });
-    return { status: "failed" as const, orderId: order.orderId };
+    return { status: "failed" as const, orderId: order.orderId, error: error instanceof Error ? error.message : "Kitchen sheet sync failed" };
   }
 }
 
@@ -138,25 +121,14 @@ async function postWebhook(url: string, body: TrackerOrder) {
     method: "POST",
     headers: { "Content-Type": "text/plain;charset=utf-8" },
     body: JSON.stringify(body),
-    redirect: "follow",
+    redirect: "manual",
   });
-  if (response.status === 302 || response.status === 303) return;
+  if (response.status === 302 || response.status === 303 || response.status === 0 || response.ok) return;
   const text = await response.text();
-  if (!response.ok) throw new Error(`Kitchen sheet webhook responded ${response.status}`);
   const trimmed = text.trim();
-  if (!trimmed) return;
-  if (trimmed.startsWith("<")) {
-    const plain = trimmed.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
-    const message = plain.match(/The data you entered[^.]+\.|Sorry,[^.]+/)?.[0] || "Kitchen sheet rejected the order.";
-    throw new Error(message);
-  }
-  try {
-    const data = JSON.parse(trimmed) as { status?: string; message?: string; dayTab?: string };
-    if (data.status === "error") throw new Error(data.message || "Kitchen sheet webhook returned an error");
-  } catch (error) {
-    if (error instanceof SyntaxError) throw new Error("Kitchen sheet returned an unreadable response.");
-    throw error;
-  }
+  if (!trimmed || trimmed.startsWith("<")) throw new Error(`Kitchen sheet webhook responded ${response.status}`);
+  const data = JSON.parse(trimmed) as { status?: string; message?: string };
+  if (data.status === "error") throw new Error(data.message || "Kitchen sheet webhook returned an error");
 }
 
 async function ensureTab(token: string, spreadsheetId: string, tab: string, headers: string[]) {

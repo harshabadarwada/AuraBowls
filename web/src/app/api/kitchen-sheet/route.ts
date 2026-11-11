@@ -25,9 +25,17 @@ const schema = z.object({
   })).max(31).optional(),
 });
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 export async function POST(request: Request) {
-  const parsed = schema.safeParse(await request.json().catch(() => ({})));
-  if (!parsed.success) return NextResponse.json({ message: "The kitchen sheet is missing order details." }, { status: 400 });
-  const result = await exportKitchenSheet(parsed.data);
-  return NextResponse.json({ ok: true, saved: result.status === "exported", status: result.status, orderId: result.orderId });
+  try {
+    const raw = await request.text();
+    const parsed = schema.safeParse(JSON.parse(raw || "{}"));
+    if (!parsed.success) return NextResponse.json({ message: "The kitchen sheet is missing order details." }, { status: 400 });
+    const result = await exportKitchenSheet(parsed.data);
+    return NextResponse.json({ ok: true, saved: result.status === "exported", status: result.status, orderId: result.orderId });
+  } catch {
+    return NextResponse.json({ ok: false, saved: false, status: "failed" }, { status: 200 });
+  }
 }

@@ -234,7 +234,6 @@ export function SubscribeFlow({ whatsapp }: { whatsapp: string }) {
     if (!saved || !bowl || !identified) return;
     writePerson({ name: saved.name, address: saved.address, pin: saved.pin });
     writeSavedPlan(saved);
-    if (sendOutside) return;
     queueKitchenSheet({
       name: saved.name,
       phone: saved.phone,
@@ -248,7 +247,7 @@ export function SubscribeFlow({ whatsapp }: { whatsapp: string }) {
       style: style.name,
       defaultBowl: uniqueBowls.length === 1 ? uniqueBowls[0] || bowl.name : "Day-wise rotation",
       schedule: saved.picks.map((pick) => `${dayBits(pick.date).label}: ${findBowl(pick.bowlId)?.name || bowl.name}`).join(" | "),
-      note: saved.note,
+      note: [saved.note, sendOutside ? "Outside 7 km — reply first" : ""].filter(Boolean).join(" | "),
       mapUrl,
       orderId,
       daysSchedule: mealSchedule(saved.picks, bowl.name),
