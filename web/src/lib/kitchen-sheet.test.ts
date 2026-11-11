@@ -43,6 +43,22 @@ describe("subscription tracker payload", () => {
     expect(order.deliveryNotes).not.toContain("Madhapur, within 7 km");
   });
 
+  it("labels a one-off menu order as Single", () => {
+    const order = trackerOrder({
+      name: "Pooja Sharma",
+      address: "Flat 12, Madhapur",
+      area: "Madhapur",
+      mealType: "Pure Veg",
+      days: 1,
+      startDate: "2026-11-12",
+      totalPaise: 24900,
+      defaultBowl: "Paneer Meal Bowl",
+      orderId: "AB-111222",
+    });
+    expect(order.planDuration).toBe("Single");
+    expect(order.orderId).toBe("AB-111222");
+  });
+
   it("maps mix labels to the pricing matrix names", () => {
     expect(trackerMealType("veg")).toBe("Pure Veg");
     expect(trackerMealType("Pure Non-Veg")).toBe("Pure Non-Veg");

@@ -92,7 +92,7 @@ export function trackerOrder(input: TrackerOrderInput, at = new Date()): Tracker
     phoneNumber: trackerPhone(input.phone),
     deliveryArea: trackerLocation(input),
     mealType: input.mealType,
-    planDuration: `${input.days} days`,
+    planDuration: input.days <= 1 ? "Single" : `${input.days} days`,
     startDate: input.startDate.trim(),
     totalAmount: input.totalPaise / 100,
     paymentStatus: "Pending",
@@ -106,29 +106,56 @@ export function trackerOrder(input: TrackerOrderInput, at = new Date()): Tracker
   };
 }
 
-function postQuiet(url: string, body: string, type: string) {
+export function queueKitchenSheet(input: TrackerOrderInput) {
+  const body = JSON.stringify(trackerOrder(input));
   try {
     if (typeof navigator !== "undefined" && navigator.sendBeacon) {
-      navigator.sendBeacon(url, new Blob([body], { type }));
+      const sent = navigator.sendBeacon(KITCHEN_SHEET_WEBHOOK, new Blob([body], { type: "text/plain;charset=UTF-8" }));
+      if (sent) return true;
     }
   } catch {
     // Fall through to fetch.
   }
-  void fetch(url, {
+  void fetch(KITCHEN_SHEET_WEBHOOK, {
     method: "POST",
-    headers: { "Content-Type": type },
+    headers: { "Content-Type": "text/plain;charset=UTF-8" },
     body,
-    mode: url.startsWith("http") ? "no-cors" : "same-origin",
+    mode: "no-cors",
     keepalive: true,
   }).catch(() => false);
+  return true;
 }
 
-export function queueKitchenSheet(input: TrackerOrderInput) {
-  const order = JSON.stringify(trackerOrder(input));
-  const local = JSON.stringify(input);
-  postQuiet(KITCHEN_SHEET_WEBHOOK, order, "text/plain;charset=UTF-8");
-  postQuiet("/api/kitchen-sheet", local, "text/plain;charset=UTF-8");
-  return true;
+export function queueSingleOrder(input: {
+  name: string;
+  phone?: string;
+  address: string;
+  items: { name: string; quantity: number; pricePaise: number; mealType?: string }[];
+  note?: string;
+  orderId?: string;
+  startDate?: string;
+}) {
+  const start = input.startDate?.trim() || kolkataIsoDate();
+  const names = input.items.map((item) => `${item.quantity > 1 ? `${item.quantity} × ` : ""}${item.name}`);
+  const labels = input.items.map((item) => `${item.mealType || ""} ${item.name}`.toLowerCase());
+  const hasNon = labels.some((text) => text.includes("non") || text.includes("chicken"));
+  const hasVeg = labels.some((text) => !text.includes("non") && !text.includes("chicken"));
+  const weekday = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][new Date(`${start}T00:00:00Z`).getUTCDay()] || "";
+  return queueKitchenSheet({
+    name: input.name,
+    phone: input.phone,
+    address: input.address,
+    area: input.address,
+    mealType: hasNon && hasVeg ? "Mixed" : hasNon ? "Pure Non-Veg" : "Pure Veg",
+    days: 1,
+    startDate: start,
+    totalPaise: input.items.reduce((sum, item) => sum + item.pricePaise * item.quantity, 0),
+    defaultBowl: names.join(", ").slice(0, 80),
+    schedule: names.join(" | "),
+    note: input.note,
+    orderId: input.orderId,
+    daysSchedule: [{ date: start, weekday, bowl: names.join(", ").slice(0, 80) }],
+  });
 }
 
 export async function postKitchenSheet(input: TrackerOrderInput) {

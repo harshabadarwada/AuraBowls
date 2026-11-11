@@ -7,7 +7,9 @@ import { catalog } from "../../prisma/catalog";
 import { DishArt } from "@/components/dish-art";
 import { isServedArea } from "@/lib/area";
 import { formatInr } from "@/lib/format";
+import { newOrderId, queueSingleOrder } from "@/lib/kitchen-sheet";
 import { menuOrderText, whatsappHref } from "@/lib/order-message";
+import { kitchenPickDate } from "@/lib/power-bowls";
 
 export function MenuCart({ whatsapp }: { whatsapp: string }) {
   const [lines, setLines] = useState<MenuLine[]>([]);
@@ -33,6 +35,7 @@ export function MenuCart({ whatsapp }: { whatsapp: string }) {
   }
 
   const [notice, setNotice] = useState("");
+  const [orderId] = useState(() => newOrderId());
   const total = lines.reduce((sum, line) => sum + line.pricePaise * line.quantity, 0);
   const person = { name: name.trim(), address: address.trim(), pin: inArea ? SERVED_PIN : pin.trim() };
   const ready = person.name.length >= 2 && person.address.length >= 4 && inArea !== null && (inArea || person.pin.length >= 3);
@@ -109,7 +112,17 @@ export function MenuCart({ whatsapp }: { whatsapp: string }) {
             <p className="text-lg font-semibold">{formatInr(total)}</p>
           </div>
           {href ? (
-            <a className="btn btn-accent" href={href} target="_blank" rel="noreferrer">{outside ? "Send location" : "Place order"}</a>
+            <a className="btn btn-accent" href={href} target="_blank" rel="noreferrer" onClick={() => {
+              writePerson(person);
+              queueSingleOrder({
+                name: person.name,
+                address: person.address,
+                items: lines,
+                note: outside ? "Outside 7 km — reply first" : "",
+                orderId,
+                startDate: kitchenPickDate().date,
+              });
+            }}>{outside ? "Send location" : "Place order"}</a>
           ) : (
             <button type="button" className="btn btn-accent" onClick={askForMissing}>Place order</button>
           )}

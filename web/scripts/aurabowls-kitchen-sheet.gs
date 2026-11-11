@@ -3,10 +3,10 @@
  * Fills Subscription Orders from row 11, then inserts a personal tracker tab.
  *
  * After paste: Save, then Deploy → Manage deployments → pencil → Version: New version → Deploy.
- * A GET of the /exec URL must return "version":"day-tabs-3" or the site is still on the old script.
+ * A GET of the /exec URL must return "version":"day-tabs-4" or the site is still on the old script.
  */
 
-const SCRIPT_VERSION = "day-tabs-3";
+const SCRIPT_VERSION = "day-tabs-4";
 const SHEET_ID = "1uG40XeadQAXW_QAsTob4zbsBuKUYajjLyJLYW0V_i-A";
 const SHEET_NAME_ORDERS = "Subscription Orders";
 const SHEET_NAME_PRICING = "Pricing Matrix";
@@ -152,7 +152,8 @@ function handleRequest(e) {
       notes,
     ];
 
-    const targetRow = getNextAvailableOrderRow(ordersSheet);
+    const existingRow = findOrderRow(ordersSheet, orderId);
+    const targetRow = existingRow !== -1 ? existingRow : getNextAvailableOrderRow(ordersSheet);
     try {
       ordersSheet.getRange(targetRow, 2, 1, rowValues.length).setValues([rowValues]);
     } catch (rowErr) {
@@ -193,6 +194,20 @@ function handleRequest(e) {
   } finally {
     lock.releaseLock();
   }
+}
+
+function findOrderRow(sheet, orderId) {
+  const id = String(orderId || "").trim();
+  if (!id) return -1;
+  const height = sheet.getMaxRows() - START_ROW + 1;
+  if (height < 1) return -1;
+  const shown = sheet.getRange(START_ROW, 2, height, 1).getDisplayValues();
+  for (let i = 0; i < shown.length; i++) {
+    const cell = String(shown[i][0]).trim();
+    if (cell.toLowerCase().indexOf("total summary") !== -1) break;
+    if (cell === id || cell.indexOf(id) === 0) return START_ROW + i;
+  }
+  return -1;
 }
 
 function getNextAvailableOrderRow(sheet) {
@@ -273,8 +288,11 @@ function lookupPricing(ss, planDuration, mealType) {
 
 function sanitizePlanDuration(dur) {
   if (!dur) return "5 days";
-  const num = String(dur).replace(/[^0-9]/g, "");
-  return num ? num + " days" : String(dur);
+  const text = String(dur);
+  if (text.toLowerCase().indexOf("single") !== -1) return "Single";
+  const num = text.replace(/[^0-9]/g, "");
+  if (num === "1") return "Single";
+  return num ? num + " days" : text;
 }
 
 function writeDaySheet(ss, data) {
@@ -344,7 +362,8 @@ function writeDaySheet(ss, data) {
 
 function dayTabName(orderId, planDuration, customerName) {
   const id = String(orderId || "AB").replace(/[^\w\-]/g, "").slice(0, 24);
-  const days = String(planDuration || "").replace(/[^0-9]/g, "") || "plan";
+  const raw = String(planDuration || "").toLowerCase();
+  const days = raw.indexOf("single") !== -1 ? "1" : (String(planDuration || "").replace(/[^0-9]/g, "") || "plan");
   const first = String(customerName || "").trim().split(/\s+/)[0].replace(/[^\w]/g, "").slice(0, 16);
   return (id + (first ? " " + first : "") + " " + days + "d").slice(0, 90);
 }

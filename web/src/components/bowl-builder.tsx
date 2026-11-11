@@ -22,7 +22,9 @@ import {
 } from "@/lib/custom-bowl";
 import { isServedArea } from "@/lib/area";
 import { formatInr } from "@/lib/format";
+import { newOrderId, queueSingleOrder } from "@/lib/kitchen-sheet";
 import { customBowlText, deliveryChargeNote, outsideAreaText, whatsappHref } from "@/lib/order-message";
+import { kitchenPickDate } from "@/lib/power-bowls";
 
 const steps = [
   { id: "diet", label: "Veg or non-veg" },
@@ -43,6 +45,7 @@ export function BowlBuilder({ whatsapp }: { whatsapp: string }) {
   const [step, setStep] = useState(0);
   const [person, setPerson] = useState({ name: "", address: "", pin: "" });
   const [notice, setNotice] = useState("");
+  const [orderId] = useState(() => newOrderId());
   const nameRef = useRef<HTMLInputElement>(null);
   const addressRef = useRef<HTMLTextAreaElement>(null);
   const pinRef = useRef<HTMLInputElement>(null);
@@ -121,6 +124,15 @@ export function BowlBuilder({ whatsapp }: { whatsapp: string }) {
       return;
     }
     writePerson(person);
+    const proteinName = priced.protein?.name || "custom bowl";
+    queueSingleOrder({
+      name: person.name,
+      address: person.address,
+      items: [{ name: `Custom ${proteinName} bowl`, quantity: priced.quantity, pricePaise: priced.bowlPaise, mealType: bowl.diet }],
+      note: outside ? "Outside 7 km — reply first" : "",
+      orderId,
+      startDate: kitchenPickDate().date,
+    });
     const text = outside ? outsideAreaText(person) : customBowlText({ ...person, bowl });
     const href = whatsappHref(whatsapp, text);
     if (href) window.open(href, "_blank", "noopener");

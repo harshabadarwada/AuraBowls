@@ -4,7 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import { BowlTile } from "@/components/bowl-tile";
 import { addMenuLine, readMenu, readPerson, SERVED_PIN, writeMenu, writePerson, type MenuLine } from "@/components/draft";
 import { formatInr } from "@/lib/format";
+import { newOrderId, queueSingleOrder } from "@/lib/kitchen-sheet";
 import { menuOrderText, outsideAreaText, whatsappHref } from "@/lib/order-message";
+import { kitchenPickDate } from "@/lib/power-bowls";
 import type { PublicMeal } from "@/server/catalog";
 
 export function MenuBrowser({ meals, whatsapp = "", initialType = "all", initialQuery = "" }: { meals: PublicMeal[]; whatsapp?: string; initialType?: string; initialQuery?: string }) {
@@ -133,6 +135,7 @@ function BasketBar({ lines, whatsapp }: { lines: MenuLine[]; whatsapp: string })
   const [address, setAddress] = useState("");
   const [pin, setPin] = useState("");
   const [inArea, setInArea] = useState<boolean | null>(null);
+  const [orderId] = useState(() => newOrderId());
   useEffect(() => {
     const person = readPerson();
     setName(person.name);
@@ -167,7 +170,17 @@ function BasketBar({ lines, whatsapp }: { lines: MenuLine[]; whatsapp: string })
         <p className="mt-3 text-sm leading-6 text-[#6A5A4E]">Delivery charges vary by location and are not included in {formatInr(total)}.</p>
         {outside ? <p className="mt-2 text-sm text-[#7a3410]">This is farther than 7 km from Madhapur. This sends your name and address so we can reply.</p> : null}
         {href ? (
-          <a className="btn btn-accent mt-4 w-full" href={href} target="_blank" rel="noreferrer" onClick={() => writePerson(person)}>Send on WhatsApp</a>
+          <a className="btn btn-accent mt-4 w-full" href={href} target="_blank" rel="noreferrer" onClick={() => {
+            writePerson(person);
+            queueSingleOrder({
+              name: person.name,
+              address: person.address,
+              items: lines,
+              note: outside ? "Outside 7 km — reply first" : "",
+              orderId,
+              startDate: kitchenPickDate().date,
+            });
+          }}>Send on WhatsApp</a>
         ) : (
           <p className="mt-3 text-sm text-[#6A5A4E]">Enter your name, address, and whether you are within 7 km of Madhapur.</p>
         )}
