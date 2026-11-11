@@ -12,9 +12,14 @@ export type TrackerOrder = {
   planDuration: string;
   startDate: string;
   totalAmount: number;
-  paymentStatus: "Unpaid" | "Paid";
+  paymentStatus: "Pending" | "Paid" | "Failed";
   orderStatus: "Pending" | "Active";
   deliveryNotes: string;
+  style?: string;
+  slot?: string;
+  defaultBowl?: string;
+  daysSchedule?: { date: string; weekday: string; bowl: string }[];
+  mapUrl?: string;
 };
 
 export type TrackerOrderInput = {
@@ -31,6 +36,9 @@ export type TrackerOrderInput = {
   defaultBowl?: string;
   schedule?: string;
   note?: string;
+  mapUrl?: string;
+  orderId?: string;
+  daysSchedule?: { date: string; weekday: string; bowl: string }[];
 };
 
 export function kolkataIsoDate(at = new Date()) {
@@ -60,9 +68,16 @@ export function trackerMealType(mix: string): TrackerOrder["mealType"] {
   return "Pure Veg";
 }
 
+export function trackerLocation(input: Pick<TrackerOrderInput, "address" | "area">) {
+  const address = input.address.trim();
+  const area = input.area.trim();
+  if (address) return address;
+  return area;
+}
+
 export function trackerOrder(input: TrackerOrderInput, at = new Date()): TrackerOrder {
   const notes = [
-    input.address.trim() ? `Address: ${input.address.trim()}` : "",
+    input.mapUrl?.trim() ? `Map: ${input.mapUrl.trim()}` : "",
     input.slot?.trim() ? `Lunch slot: ${input.slot.trim()}` : "",
     input.style?.trim() ? `Style: ${input.style.trim()}` : "",
     input.defaultBowl?.trim() ? `Default bowl: ${input.defaultBowl.trim()}` : "",
@@ -71,19 +86,43 @@ export function trackerOrder(input: TrackerOrderInput, at = new Date()): Tracker
   ].filter(Boolean);
   return {
     spreadsheetId: KITCHEN_SPREADSHEET_ID,
-    orderId: newOrderId(),
+    orderId: input.orderId?.trim() || newOrderId(),
     orderDate: kolkataIsoDate(at),
     customerName: input.name.trim(),
     phoneNumber: trackerPhone(input.phone),
-    deliveryArea: input.area.trim(),
+    deliveryArea: trackerLocation(input),
     mealType: input.mealType,
     planDuration: `${input.days} days`,
     startDate: input.startDate.trim(),
     totalAmount: input.totalPaise / 100,
-    paymentStatus: "Unpaid",
+    paymentStatus: "Pending",
     orderStatus: "Pending",
     deliveryNotes: notes.join(" | "),
+    style: input.style,
+    slot: input.slot,
+    defaultBowl: input.defaultBowl,
+    daysSchedule: input.daysSchedule,
+    mapUrl: input.mapUrl,
   };
+}
+
+export function queueKitchenSheet(input: TrackerOrderInput) {
+  const body = JSON.stringify(input);
+  try {
+    if (typeof navigator !== "undefined" && navigator.sendBeacon) {
+      const sent = navigator.sendBeacon("/api/kitchen-sheet", new Blob([body], { type: "application/json" }));
+      if (sent) return true;
+    }
+  } catch {
+    // Fall through to fetch.
+  }
+  void fetch("/api/kitchen-sheet", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body,
+    keepalive: true,
+  }).catch(() => false);
+  return true;
 }
 
 export async function postKitchenSheet(input: TrackerOrderInput) {
@@ -95,6 +134,7 @@ export async function postKitchenSheet(input: TrackerOrderInput) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(input),
       signal: controller.signal,
+      keepalive: true,
     });
     if (!response.ok) return false;
     const data = (await response.json().catch(() => null)) as { ok?: boolean } | null;

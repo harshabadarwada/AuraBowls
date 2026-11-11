@@ -25,6 +25,15 @@ export function formatInr(paise: number): string {
   return `${sign}₹${grouped}.${frac}`;
 }
 
+export function formatInrCompact(paise: number): string {
+  const abs = Math.abs(Math.trunc(paise));
+  if (abs % 100 === 0) {
+    const sign = paise < 0 ? "-" : "";
+    return `${sign}₹${Math.floor(abs / 100).toLocaleString("en-IN")}`;
+  }
+  return formatInr(paise);
+}
+
 /** Largest-remainder split so the parts sum to `total`. */
 export function allocatePaise(total: number, weights: number[]): number[] {
   if (weights.length === 0) return [];

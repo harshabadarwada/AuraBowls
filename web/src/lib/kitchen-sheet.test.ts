@@ -6,8 +6,14 @@ describe("subscription tracker payload", () => {
     const order = trackerOrder({
       name: "Pooja Sharma",
       phone: "9876543210",
-      address: "Flat 12, Madhapur",
+      address: "Flat 12, Ayyappa Society, Madhapur",
       area: "Madhapur, within 7 km",
+      mapUrl: "https://maps.google.com/?q=17.448400,78.390800",
+      orderId: "AB-123456",
+      daysSchedule: [
+        { date: "2026-11-15", weekday: "Sat", bowl: "Paneer Meal Bowl" },
+        { date: "2026-11-17", weekday: "Mon", bowl: "Rajma Meal Bowl" },
+      ],
       mealType: "Pure Veg",
       days: 10,
       startDate: "2026-11-15",
@@ -19,20 +25,22 @@ describe("subscription tracker payload", () => {
       note: "Deliver before 12:30 PM",
     }, new Date("2026-11-11T10:00:00+05:30"));
     expect(order.spreadsheetId).toBe("1uG40XeadQAXW_QAsTob4zbsBuKUYajjLyJLYW0V_i-A");
-    expect(order.orderId).toMatch(/^AB-\d{6}$/);
+    expect(order.orderId).toBe("AB-123456");
+    expect(order.daysSchedule).toHaveLength(2);
     expect(order.orderDate).toBe("2026-11-11");
     expect(order.customerName).toBe("Pooja Sharma");
     expect(order.phoneNumber).toBe("+91 9876543210");
-    expect(order.deliveryArea).toBe("Madhapur, within 7 km");
+    expect(order.deliveryArea).toBe("Flat 12, Ayyappa Society, Madhapur");
     expect(order.mealType).toBe("Pure Veg");
     expect(order.planDuration).toBe("10 days");
     expect(order.startDate).toBe("2026-11-15");
     expect(order.totalAmount).toBe(1950);
-    expect(order.paymentStatus).toBe("Unpaid");
+    expect(order.paymentStatus).toBe("Pending");
     expect(order.orderStatus).toBe("Pending");
-    expect(order.deliveryNotes).toContain("Address: Flat 12, Madhapur");
+    expect(order.deliveryNotes).toContain("Map: https://maps.google.com/?q=17.448400,78.390800");
     expect(order.deliveryNotes).toContain("Rajma Meal Bowl");
     expect(order.deliveryNotes).toContain("Deliver before 12:30 PM");
+    expect(order.deliveryNotes).not.toContain("Madhapur, within 7 km");
   });
 
   it("maps mix labels to the pricing matrix names", () => {

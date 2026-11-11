@@ -17,12 +17,12 @@ const primary = [
   { href: "/", label: "Home" },
   { href: "/menu", label: "Menu" },
   { href: "/plans", label: "Meal Plans" },
-  { href: "/plans/tomorrow", label: "Sheet update" },
   { href: "/about", label: "About" },
 ];
 
 const secondary = [
   { href: "/track", label: "Track Order" },
+  { href: "/plans/tomorrow", label: "Change a lunch" },
   { href: "/contact", label: "Contact" },
   { href: "/privacy", label: "Privacy" },
   { href: "/terms", label: "Terms" },
@@ -32,6 +32,7 @@ const secondary = [
 function isActive(path: string, href: string) {
   if (href === "/") return path === "/";
   if (href === "/menu" && (path === "/menu" || path.startsWith("/menu/") || path.startsWith("/meals"))) return true;
+  if (href === "/plans") return path === "/plans" || (path.startsWith("/plans/") && !path.startsWith("/plans/tomorrow"));
   return path === href || path.startsWith(`${href}/`);
 }
 
@@ -247,7 +248,7 @@ export function Footer({ whatsapp }: { whatsapp: string }) {
           <p className="mt-5 max-w-xs text-sm leading-6 text-[#d5e4d8]">Fresh breakfast and lunch bowls within 7 km of Madhapur, Hyderabad.</p>
         </div>
         <div className="grid grid-cols-2 gap-x-6 gap-y-10 lg:grid-cols-3">
-          <FooterLinks title="Order" links={[["/menu", "Menu"], ["/plans", "Meal plans"], ["/plans/tomorrow", "Sheet update"], ["/cart", "Cart"], ["/track", "Track an order"]]} />
+          <FooterLinks title="Order" links={[["/menu", "Menu"], ["/plans", "Meal plans"], ["/plans/tomorrow", "Change a lunch"], ["/cart", "Cart"], ["/track", "Track an order"]]} />
           <FooterLinks title="Policies" links={[["/privacy", "Privacy"], ["/terms", "Terms"], ["/refund-policy", "Cancellation and refunds"], ["/about", "About"]]} />
           <div className="col-span-2 rounded-[22px] bg-white/[0.06] p-5 ring-1 ring-white/10 lg:col-span-1 lg:bg-transparent lg:p-0 lg:ring-0">
             <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/60">Support</h2>

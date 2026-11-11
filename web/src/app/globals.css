@@ -158,6 +158,25 @@ table.admin th, .kitchen-sheet th { color: #6a5a4e; font-weight: 650; font-size:
 }
 @keyframes bowl-drop { from { opacity: 0; transform: translateY(-18px) scale(.86); } to { opacity: 1; transform: none; } }
 .bowl-layer { animation: bowl-drop 700ms cubic-bezier(.16,.84,.32,1) both; }
+.day-strip {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  padding: 0.15rem 0.15rem 0.45rem;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+.day-strip::-webkit-scrollbar { display: none; }
+.day-chip {
+  scroll-snap-align: start;
+  flex: 0 0 4.7rem;
+  min-height: 6.4rem;
+  border-radius: 1.15rem;
+  padding: 0.45rem 0.35rem 0.5rem;
+  text-align: center;
+}
 .caution-tape {
   background-color: #FFD400;
   padding-block: 7px;

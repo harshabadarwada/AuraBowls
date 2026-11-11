@@ -1,6 +1,6 @@
-import { formatInr } from "./money";
+import { formatInr, formatInrCompact } from "./money";
 
-export { formatInr };
+export { formatInr, formatInrCompact };
 
 export function dietLabel(tag: string) {
   if (tag === "non_veg") return "Non-veg";

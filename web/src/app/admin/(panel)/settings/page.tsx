@@ -27,7 +27,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
         <input className="field mt-1" name="sheetsWebhookUrl" defaultValue={settings.sheetsWebhookUrl || KITCHEN_SHEET_WEBHOOK} placeholder="https://script.google.com/macros/s/.../exec" />
       </label>
       <label className="text-sm"><input type="checkbox" name="sheetsSyncEnabled" defaultChecked={settings.sheetsSyncEnabled} /> Also export new paid checkout orders to Google Sheets</label>
-      <p className="text-xs text-[#6A5A4E]">New subscription WhatsApp orders fill Subscription Orders from row 11, then insert above Total Summary. Paste web/scripts/aurabowls-kitchen-sheet.gs into Apps Script, deploy as a web app (Anyone), then paste that URL here. Payment status is Unpaid until the kitchen confirms the QR payment.</p>
+      <p className="text-xs text-[#6A5A4E]">New subscription WhatsApp orders fill Subscription Orders from row 11, then insert above Total Summary. Paste web/scripts/aurabowls-kitchen-sheet.gs into Apps Script, deploy as a web app (Anyone), then paste that URL here. Payment status is Pending until the kitchen confirms the QR payment.</p>
       <button className="btn btn-accent w-fit">Save settings</button>
     </form>
   );

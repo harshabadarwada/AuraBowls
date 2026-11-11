@@ -143,11 +143,18 @@ async function postWebhook(url: string, body: TrackerOrder) {
   if (response.status === 302 || response.status === 303) return;
   const text = await response.text();
   if (!response.ok) throw new Error(`Kitchen sheet webhook responded ${response.status}`);
+  const trimmed = text.trim();
+  if (!trimmed) return;
+  if (trimmed.startsWith("<")) {
+    const plain = trimmed.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    const message = plain.match(/The data you entered[^.]+\.|Sorry,[^.]+/)?.[0] || "Kitchen sheet rejected the order.";
+    throw new Error(message);
+  }
   try {
-    const data = JSON.parse(text) as { status?: string; message?: string };
+    const data = JSON.parse(trimmed) as { status?: string; message?: string; dayTab?: string };
     if (data.status === "error") throw new Error(data.message || "Kitchen sheet webhook returned an error");
   } catch (error) {
-    if (error instanceof SyntaxError) return;
+    if (error instanceof SyntaxError) throw new Error("Kitchen sheet returned an unreadable response.");
     throw error;
   }
 }
