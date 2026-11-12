@@ -2,30 +2,18 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { readDraft, readMenu, readPerson, SERVED_PIN, writeMenu, writePerson, type MenuLine } from "@/components/draft";
+import { readDraft, readMenu, writeMenu, type MenuLine } from "@/components/draft";
 import { catalog } from "../../prisma/catalog";
 import { DishArt } from "@/components/dish-art";
-import { isServedArea } from "@/lib/area";
 import { formatInr } from "@/lib/format";
-import { newOrderId, queueSingleOrder } from "@/lib/kitchen-sheet";
-import { menuOrderText, whatsappHref } from "@/lib/order-message";
-import { kitchenPickDate } from "@/lib/power-bowls";
+import { SingleCheckout } from "@/components/single-checkout";
 
 export function MenuCart({ whatsapp }: { whatsapp: string }) {
   const [lines, setLines] = useState<MenuLine[]>([]);
   const [hasPlan, setHasPlan] = useState(false);
-  const [name, setName] = useState("");
-  const [address, setAddress] = useState("");
-  const [pin, setPin] = useState("");
-  const [inArea, setInArea] = useState<boolean | null>(null);
   useEffect(() => {
     setLines(readMenu());
     setHasPlan((readDraft()?.selections.length || 0) > 0);
-    const person = readPerson();
-    setName(person.name);
-    setAddress(person.address);
-    setPin(person.pin);
-    setInArea(person.pin ? isServedArea(person.pin) : null);
   }, []);
 
   function update(slug: string, quantity: number) {
@@ -34,48 +22,13 @@ export function MenuCart({ whatsapp }: { whatsapp: string }) {
     setLines(next);
   }
 
-  const [notice, setNotice] = useState("");
-  const [orderId] = useState(() => newOrderId());
   const total = lines.reduce((sum, line) => sum + line.pricePaise * line.quantity, 0);
-  const person = { name: name.trim(), address: address.trim(), pin: inArea ? SERVED_PIN : pin.trim() };
-  const ready = person.name.length >= 2 && person.address.length >= 4 && inArea !== null && (inArea || person.pin.length >= 3);
-  const href = ready ? whatsappHref(whatsapp, menuOrderText({ ...person, lines })) : "";
-  const outside = inArea === false;
-  function askForMissing() {
-    if (person.name.length < 2) {
-      setNotice("Add your name. Then Place order opens WhatsApp.");
-      document.getElementById("order-name")?.focus();
-      return;
-    }
-    if (person.address.length < 4) {
-      setNotice("Add the address. Then Place order opens WhatsApp.");
-      document.getElementById("order-address")?.focus();
-      return;
-    }
-    setNotice("Say if this address is within 7 km of Madhapur.");
-  }
 
   return (
     <div className="mx-auto max-w-xl">
       <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#1A4A16]">AuraBowls</p>
       <h1 className="display mt-2 text-4xl text-[#1A4A16]">Your order</h1>
-      <p className="mt-3 text-sm leading-6 text-[#6A5A4E]">We deliver within 7 km of Madhapur. Your name and address are written into the WhatsApp message before it opens.</p>
-      <label className="mt-5 block text-sm font-semibold text-[#1A4A16]">Name
-        <input id="order-name" className="field mt-1" value={name} onChange={(event) => { setName(event.target.value); setNotice(""); writePerson({ name: event.target.value, address, pin }); }} />
-      </label>
-      <label className="mt-3 block text-sm font-semibold text-[#1A4A16]">Address
-        <input id="order-address" className="field mt-1" value={address} onChange={(event) => { setAddress(event.target.value); setNotice(""); writePerson({ name, address: event.target.value, pin }); }} placeholder="Flat, street, area" />
-      </label>
-      <div className="mt-4 flex flex-wrap gap-2">
-        <button type="button" className={`chip ${inArea === true ? "chip-on" : ""}`} onClick={() => { setInArea(true); setNotice(""); writePerson({ name, address, pin: SERVED_PIN }); }}>Within 7 km of Madhapur</button>
-        <button type="button" className={`chip ${inArea === false ? "chip-on" : ""}`} onClick={() => { setInArea(false); setNotice(""); }}>Farther than 7 km</button>
-      </div>
-      {inArea === false ? (
-        <label className="mt-3 block text-sm font-semibold text-[#1A4A16]">Your area
-          <input id="order-pin" className="field mt-1" value={pin} onChange={(event) => { const next = event.target.value; setPin(next); setNotice(""); writePerson({ name, address, pin: next }); }} placeholder="Neighbourhood or landmark" />
-        </label>
-      ) : null}
-      {notice ? <p className="mt-3 text-sm text-[#7a3410]" role="alert">{notice}</p> : null}
+      <p className="mt-3 text-sm leading-6 text-[#6A5A4E]">We deliver within 7 km of Madhapur. Add your mobile so Track order can show this lunch.</p>
       {lines.length === 0 ? (
         <p className="store-card mt-6 p-6 text-sm text-[#6A5A4E]">The basket is empty. <Link className="font-semibold text-[#1A4A16]" href="/menu">See the menu</Link></p>
       ) : (
@@ -101,35 +54,10 @@ export function MenuCart({ whatsapp }: { whatsapp: string }) {
         <div className="mt-5">
           <p className="text-sm text-[#6A5A4E]">Menu total</p>
           <p className="display text-4xl text-[#1A4A16]">{formatInr(total)}</p>
-          <p className="mt-1 text-xs text-[#6A5A4E]">Delivery charges vary by location and are not included in this total. The kitchen confirms the charge.</p>
-          {outside && ready ? <p className="mt-2 text-sm text-[#6A5A4E]">This is farther than 7 km from Madhapur. The message tells us where you are so we can reply.</p> : null}
         </div>
       ) : null}
-      {lines.length > 0 ? (
-        <div className="fixed inset-x-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-30 flex items-center justify-between gap-3 rounded-full bg-[#1A4A16] px-4 py-2 text-white shadow-[0_12px_30px_rgba(26,74,22,0.2)] md:bottom-6">
-          <div>
-            <p className="text-[11px] uppercase tracking-wide text-white/70">{lines.length} {lines.length === 1 ? "item" : "items"} · delivery extra</p>
-            <p className="text-lg font-semibold">{formatInr(total)}</p>
-          </div>
-          {href ? (
-            <a className="btn btn-accent" href={href} target="_blank" rel="noreferrer" onClick={() => {
-              writePerson(person);
-              queueSingleOrder({
-                name: person.name,
-                address: person.address,
-                items: lines,
-                note: outside ? "Outside 7 km — reply first" : "",
-                orderId,
-                startDate: kitchenPickDate().date,
-              });
-            }}>{outside ? "Send location" : "Place order"}</a>
-          ) : (
-            <button type="button" className="btn btn-accent" onClick={askForMissing}>Place order</button>
-          )}
-        </div>
-      ) : null}
+      {lines.length > 0 ? <SingleCheckout lines={lines} whatsapp={whatsapp} showItems={false} /> : null}
       {hasPlan ? <p className="mt-6 text-sm text-[#6A5A4E]">A meal plan is also saved on this device. <Link className="font-semibold text-[#1A4A16]" href="/checkout">Continue that plan</Link></p> : null}
-      {lines.length > 0 ? <div className="h-24" /> : null}
     </div>
   );
 }

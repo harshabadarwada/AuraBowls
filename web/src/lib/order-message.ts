@@ -1,5 +1,5 @@
 import { areaLine, isServedArea } from "@/lib/area";
-import { formatInr } from "@/lib/format";
+import { formatInr, formatInrCompact } from "@/lib/format";
 import { BASE_BOWL_PAISE, PORTION_PAISE, describeCustomBowl, type CustomBowl } from "@/lib/custom-bowl";
 
 type Line = {
@@ -97,16 +97,65 @@ export function businessWhatsapp(stored = "") {
 
 export const deliveryChargeNote = "Delivery charges vary by location and are not included in this total. The kitchen will confirm the charge.";
 
-function identity(input: { name: string; address: string; pin: string }) {
+function identity(input: { name: string; address: string; pin: string; phone?: string }) {
   return [
     "Hello AuraBowls,",
     `Name: ${input.name.trim()}`,
+    input.phone?.trim() ? `Phone: ${input.phone.trim()}` : "",
     `Address: ${input.address.trim()}`,
     areaLine(input.pin),
   ].filter(Boolean);
 }
 
-export function outsideAreaText(input: { name: string; address: string; pin: string }) {
+function prettySlot(slot: string) {
+  if (slot.startsWith("12:00")) return "12:00 PM – 1:30 PM";
+  if (slot.startsWith("1:30")) return "1:30 PM – 3:00 PM";
+  return slot.replace("–", " – ");
+}
+
+function customerBlock(input: { name: string; address: string; pin: string; phone?: string; mapUrl?: string }) {
+  return [
+    "👤 CUSTOMER DETAILS",
+    `• Name: ${input.name.trim()}`,
+    input.phone?.trim() ? `• Phone: ${input.phone.trim()}` : "",
+    `• Address: ${input.address.trim()}`,
+    `• Area: ${isServedArea(input.pin) ? "Madhapur (within 7 km)" : input.pin.trim() || "to confirm"}`,
+    input.mapUrl?.trim() ? `• Map: ${input.mapUrl.trim()}` : "",
+  ];
+}
+
+function unpaidFooter(totalPaise: number, itemLabel = "Items") {
+  const total = formatInrCompact(totalPaise);
+  return [
+    "💰 BILLING",
+    `• ${itemLabel}: ${total}`,
+    "• Delivery Charges: Extra (based on location)",
+    "",
+    `Total: ${total} + Delivery Charges`,
+    "",
+    "💳 PAYMENT STATUS: PENDING",
+    "",
+    "Please follow these steps:",
+    "1️⃣ Kitchen reviews and confirms the order.",
+    "2️⃣ AuraBowls shares the payment QR code here.",
+    "3️⃣ Customer completes payment.",
+    "4️⃣ Kitchen verifies payment and starts cooking.",
+    "",
+    "⚠️ IMPORTANT – KITCHEN INSTRUCTIONS",
+    "",
+    "• Do not prepare any meal before payment confirmation.",
+    "• I have not paid yet.",
+    "",
+    "✅ ORDER CONFIRMATION REQUIRED",
+    "",
+    "Please confirm availability, delivery for this location, delivery charges, and the final payment amount.",
+    "",
+    "Thank you!",
+    "AURABOWLS – Power Your Day, One Bowl at a Time.",
+  ];
+}
+
+export function outsideAreaText(input: { name: string; address: string; pin: string; phone?: string }) {
   return [
     ...identity(input),
     "",
@@ -185,30 +234,67 @@ export function guideOrderText(input: {
   ].filter((line) => line !== undefined).join("\n");
 }
 
-export function menuOrderText(input: { name: string; address: string; pin: string; lines: { name: string; quantity: number; pricePaise: number }[] }) {
+export function menuOrderText(input: {
+  name: string;
+  address: string;
+  pin: string;
+  phone?: string;
+  lines: { name: string; quantity: number; pricePaise: number }[];
+  orderId?: string;
+  date?: string;
+  slot?: string;
+  mapUrl?: string;
+}) {
   const total = input.lines.reduce((sum, line) => sum + line.pricePaise * line.quantity, 0);
   if (!isServedArea(input.pin)) return outsideAreaText(input);
   return [
-    ...identity(input),
+    "🥗 AURABOWLS | SINGLE ORDER",
     "",
-    "I want to order these meals. Please send the payment QR on this chat.",
+    input.orderId?.trim() ? `Order ID: ${input.orderId.trim()}` : "",
     "",
-    ...input.lines.map((line) => `${line.quantity} × ${line.name} — ${formatInr(line.pricePaise * line.quantity)}`),
+    "Hello AuraBowls Team!",
     "",
-    `Menu total: ${formatInr(total)}`,
-    deliveryChargeNote,
-    "I will pay after you send the QR.",
-  ].join("\n");
+    "I'd like to confirm this single order.",
+    "",
+    ...customerBlock(input),
+    "",
+    "🍱 ORDER",
+    input.date ? `• Delivery date: ${dayLabel(input.date)}` : "",
+    input.slot ? `• Lunch slot: ${prettySlot(input.slot)}` : "",
+    ...input.lines.map((line) => `🔹 ${line.quantity} × ${line.name} — ${formatInrCompact(line.pricePaise * line.quantity)}`),
+    "",
+    ...unpaidFooter(total),
+  ].filter((line) => line !== undefined).join("\n");
 }
 
-export function customBowlText(input: { name: string; address: string; pin: string; bowl: CustomBowl }) {
+export function customBowlText(input: {
+  name: string;
+  address: string;
+  pin: string;
+  phone?: string;
+  bowl: CustomBowl;
+  orderId?: string;
+  date?: string;
+  slot?: string;
+  mapUrl?: string;
+}) {
   if (!isServedArea(input.pin)) return outsideAreaText(input);
   const { priced, lines } = describeCustomBowl(input.bowl);
   return [
-    ...identity(input),
+    "🥗 AURABOWLS | SINGLE ORDER",
     "",
-    "I want to order a custom bowl. Please send the payment QR on this chat. I have not paid yet.",
+    input.orderId?.trim() ? `Order ID: ${input.orderId.trim()}` : "",
     "",
+    "Hello AuraBowls Team!",
+    "",
+    "I'd like to confirm this custom bowl order.",
+    "",
+    ...customerBlock(input),
+    "",
+    "🍱 ORDER",
+    input.date ? `• Delivery date: ${dayLabel(input.date)}` : "",
+    input.slot ? `• Lunch slot: ${prettySlot(input.slot)}` : "",
+    `🔹 ${priced.quantity} × custom bowl — ${formatInrCompact(priced.totalPaise)}`,
     ...lines,
     "",
     `Base bowl: ${formatInr(BASE_BOWL_PAISE)}`,
@@ -216,9 +302,9 @@ export function customBowlText(input: { name: string; address: string; pin: stri
     ...priced.extras.map((item) => `${item.name}: ${formatInr(item.pricePaise || 0)}`),
     `Per bowl: ${formatInr(priced.bowlPaise)}`,
     `Bowls: ${priced.quantity}`,
-    `Total: ${formatInr(priced.totalPaise)}`,
-    deliveryChargeNote,
-  ].join("\n");
+    "",
+    ...unpaidFooter(priced.totalPaise, "Custom bowl"),
+  ].filter((line) => line !== undefined).join("\n");
 }
 
 export function planOrderText(input: {

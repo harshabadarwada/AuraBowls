@@ -94,4 +94,24 @@ describe("WhatsApp identity", () => {
     expect(text).toContain("Total: ₹418.00");
     expect(text.indexOf("Name:")).toBeLessThan(text.indexOf("Each day:"));
   });
+
+  it("writes a single-order kitchen sheet with order id and unpaid status", () => {
+    const text = menuOrderText({
+      name: "Meera Rao",
+      address: "Flat 12, Madhapur",
+      pin: "Madhapur 7km",
+      phone: "9876543210",
+      orderId: "AB-111222",
+      date: "2026-11-13",
+      slot: "12:00–1:30",
+      lines: [{ name: "Paneer Meal Bowl", quantity: 1, pricePaise: 24900 }],
+    });
+    expect(text).toContain("AURABOWLS | SINGLE ORDER");
+    expect(text).toContain("Order ID: AB-111222");
+    expect(text).toContain("Phone: 9876543210");
+    expect(text).toContain("🔹 1 × Paneer Meal Bowl — ₹249");
+    expect(text).toContain("Lunch slot: 12:00 PM – 1:30 PM");
+    expect(text).toContain("PAYMENT STATUS: PENDING");
+    expect(text).toContain("I have not paid yet.");
+  });
 });

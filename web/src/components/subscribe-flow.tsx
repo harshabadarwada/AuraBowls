@@ -65,6 +65,7 @@ export function SubscribeFlow({ whatsapp }: { whatsapp: string }) {
   useEffect(() => {
     const person = readPerson();
     setName(person.name);
+    setPhone((person.phone || "").replace(/\D/g, "").slice(0, 10));
     setAddress(person.address);
     setPin(person.pin);
     if (person.pin) setInArea(isServedArea(person.pin));
@@ -90,7 +91,7 @@ export function SubscribeFlow({ whatsapp }: { whatsapp: string }) {
   const totalPaise = planPricePaise(lengthId, mix, styleId);
   const perLunch = lunchPaise(lengthId, mix, styleId);
   const person = { name: name.trim(), address: address.trim(), pin: pin.trim() };
-  const identified = person.name.length >= 2 && person.address.length >= 4;
+  const identified = person.name.length >= 2 && person.address.length >= 4 && phone.replace(/\D/g, "").length === 10;
   const confirmPerson = { name: person.name, address: person.address, pin: inArea ? SERVED_PIN : person.pin };
   const sendOutside = !inArea;
   const deliveryArea = person.address || place;
@@ -232,7 +233,7 @@ export function SubscribeFlow({ whatsapp }: { whatsapp: string }) {
 
   function placeOrder() {
     if (!saved || !bowl || !identified) return;
-    writePerson({ name: saved.name, address: saved.address, pin: saved.pin });
+    writePerson({ name: saved.name, address: saved.address, pin: saved.pin, phone: saved.phone });
     writeSavedPlan(saved);
     queueKitchenSheet({
       name: saved.name,
@@ -378,7 +379,7 @@ export function SubscribeFlow({ whatsapp }: { whatsapp: string }) {
             <input className="field mt-1" value={name} onChange={(event) => setName(event.target.value)} placeholder="Your name" autoComplete="name" />
           </label>
           <label className="mt-3 block text-sm font-semibold text-[#1A4A16]">Phone
-            <input className="field mt-1" inputMode="numeric" maxLength={10} value={phone} onChange={(event) => setPhone(event.target.value.replace(/\D/g, "").slice(0, 10))} placeholder="10-digit mobile" autoComplete="tel" />
+            <input className="field mt-1 min-h-12" type="tel" inputMode="numeric" maxLength={10} value={phone} onChange={(event) => setPhone(event.target.value.replace(/\D/g, "").slice(0, 10))} placeholder="10-digit mobile" autoComplete="tel" />
           </label>
           <label className="mt-3 block text-sm font-semibold text-[#1A4A16]">Delivery address
             <input className="field mt-1" value={address} onChange={(event) => setAddress(event.target.value)} placeholder="Flat, street, landmark" autoComplete="street-address" />
@@ -468,7 +469,7 @@ export function SubscribeFlow({ whatsapp }: { whatsapp: string }) {
           href ? (
             <a className="btn btn-accent min-h-12 w-full" href={href} target="_blank" rel="noreferrer" onClick={placeOrder}>Place order</a>
           ) : (
-            <button type="button" className="btn btn-accent min-h-12 w-full" onClick={() => setError("Enter your name and address so we can deliver.")}>Place order</button>
+            <button type="button" className="btn btn-accent min-h-12 w-full" onClick={() => setError("Enter your name, 10-digit mobile, and address so we can deliver and you can track.")}>Place order</button>
           )
         ) : null}
       </div>

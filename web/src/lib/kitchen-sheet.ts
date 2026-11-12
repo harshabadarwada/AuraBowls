@@ -134,6 +134,8 @@ export function queueSingleOrder(input: {
   note?: string;
   orderId?: string;
   startDate?: string;
+  slot?: string;
+  mapUrl?: string;
 }) {
   const start = input.startDate?.trim() || kolkataIsoDate();
   const names = input.items.map((item) => `${item.quantity > 1 ? `${item.quantity} × ` : ""}${item.name}`);
@@ -154,6 +156,8 @@ export function queueSingleOrder(input: {
     schedule: names.join(" | "),
     note: input.note,
     orderId: input.orderId,
+    slot: input.slot,
+    mapUrl: input.mapUrl,
     daysSchedule: [{ date: start, weekday, bowl: names.join(", ").slice(0, 80) }],
   });
 }

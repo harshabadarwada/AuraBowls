@@ -3,10 +3,10 @@
  * Fills Subscription Orders from row 11, then inserts a personal tracker tab.
  *
  * After paste: Save, then Deploy → Manage deployments → pencil → Version: New version → Deploy.
- * A GET of the /exec URL must return "version":"day-tabs-4" or the site is still on the old script.
+ * A GET of the /exec URL must return "version":"day-tabs-5" or the site is still on the old script.
  */
 
-const SCRIPT_VERSION = "day-tabs-4";
+const SCRIPT_VERSION = "day-tabs-5";
 const SHEET_ID = "1uG40XeadQAXW_QAsTob4zbsBuKUYajjLyJLYW0V_i-A";
 const SHEET_NAME_ORDERS = "Subscription Orders";
 const SHEET_NAME_PRICING = "Pricing Matrix";
@@ -39,8 +39,10 @@ function doPost(e) {
   return handleRequest(e);
 }
 
-function doGet() {
+function doGet(e) {
   try {
+    const phone = e && e.parameter && (e.parameter.phone || e.parameter.track);
+    if (phone) return lookupByPhone(phone);
     const ss = openWorkbook({});
     const ordersSheet = ss.getSheetByName(SHEET_NAME_ORDERS);
     return createJsonResponse({
@@ -447,6 +449,68 @@ function sanitizeMealType(meal) {
   if (m.indexOf("non") !== -1) return "Pure Non-Veg";
   if (m.indexOf("mix") !== -1) return "Mixed";
   return "Pure Veg";
+}
+
+function phoneDigits(value) {
+  let digits = String(value || "").replace(/\D/g, "");
+  if (digits.length === 12 && digits.indexOf("91") === 0) digits = digits.slice(2);
+  if (digits.length === 11 && digits.charAt(0) === "0") digits = digits.slice(1);
+  return digits.slice(-10);
+}
+
+function lookupByPhone(raw) {
+  const want = phoneDigits(raw);
+  if (want.length !== 10) return createJsonResponse({ status: "error", message: "Enter a 10-digit mobile." });
+  const ss = openWorkbook({});
+  const ordersSheet = ss.getSheetByName(SHEET_NAME_ORDERS);
+  if (!ordersSheet) return createJsonResponse({ status: "ok", orders: [] });
+  const last = ordersSheet.getLastRow();
+  if (last < START_ROW) return createJsonResponse({ status: "ok", orders: [] });
+  const values = ordersSheet.getRange(START_ROW, 2, last - START_ROW + 1, 12).getDisplayValues();
+  const orders = [];
+  const seen = {};
+  for (let i = 0; i < values.length; i++) {
+    const row = values[i];
+    const orderId = String(row[0] || "").trim();
+    if (orderId.toLowerCase().indexOf("total summary") !== -1) break;
+    if (!orderId || seen[orderId]) continue;
+    if (phoneDigits(row[3]) !== want) continue;
+    seen[orderId] = true;
+    const notes = String(row[11] || "");
+    orders.push({
+      orderId: orderId,
+      name: String(row[2] || ""),
+      plan: String(row[6] || ""),
+      startDate: String(row[7] || ""),
+      payment: String(row[9] || "Pending"),
+      status: String(row[10] || "Pending"),
+      days: daysFromTab(ss, notes, orderId, row[6], row[2]),
+    });
+  }
+  return createJsonResponse({ status: "ok", orders: orders.reverse() });
+}
+
+function daysFromTab(ss, notes, orderId, plan, name) {
+  let tab = "";
+  const match = String(notes).match(/Tracker tab:\s*([^|]+)/);
+  if (match) tab = match[1].trim();
+  let sheet = tab ? ss.getSheetByName(tab) : null;
+  if (!sheet) sheet = ss.getSheetByName(dayTabName(orderId, plan, name));
+  if (!sheet) return [];
+  const last = sheet.getLastRow();
+  if (last < 12) return [];
+  return sheet.getRange(12, 1, last - 11, 5).getDisplayValues()
+    .filter(function (row) { return row[1] || row[3]; })
+    .map(function (row) {
+      const delivered = String(row[4] || "").toLowerCase() === "yes";
+      return {
+        date: String(row[1] || ""),
+        weekday: String(row[2] || ""),
+        bowl: String(row[3] || ""),
+        delivered: delivered,
+        status: delivered ? "Delivered" : "Scheduled",
+      };
+    });
 }
 
 function createJsonResponse(obj) {

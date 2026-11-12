@@ -39,9 +39,10 @@ describe("custom bowl pricing", () => {
     expect(text).toContain("Name: Asha");
     expect(text).toContain("Address: Flat 2, Madhapur");
     expect(text).toContain("Protein: Grilled chicken × 2 portions");
-    expect(text).toContain("Total: ₹580.00");
+    expect(text).toContain("Total: ₹580 + Delivery Charges");
+    expect(text).toContain("PAYMENT STATUS: PENDING");
     expect(text).toContain("I have not paid yet.");
-    expect(text).toContain("Delivery charges vary");
+    expect(text).toContain("AURABOWLS | SINGLE ORDER");
   });
 
   it("sends outside-area visitors the enquiry message", () => {

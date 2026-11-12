@@ -65,7 +65,7 @@ export function writeMenu(lines: MenuLine[]) {
   window.dispatchEvent(new Event("aurabowls-menu"));
 }
 
-export type Person = { name: string; address: string; pin: string };
+export type Person = { name: string; address: string; pin: string; phone?: string };
 
 const PERSON_KEY = "aurabowls.person.v1";
 import { SERVED_AREA } from "@/lib/area";
@@ -73,18 +73,24 @@ import { SERVED_AREA } from "@/lib/area";
 export const SERVED_PIN = SERVED_AREA;
 
 export function readPerson(): Person {
-  if (typeof window === "undefined") return { name: "", address: "", pin: "" };
+  if (typeof window === "undefined") return { name: "", address: "", pin: "", phone: "" };
   try {
     const raw = sessionStorage.getItem(PERSON_KEY);
     const person = raw ? JSON.parse(raw) as Person : null;
-    return { name: person?.name || "", address: person?.address || "", pin: person?.pin || "" };
+    return { name: person?.name || "", address: person?.address || "", pin: person?.pin || "", phone: person?.phone || "" };
   } catch {
-    return { name: "", address: "", pin: "" };
+    return { name: "", address: "", pin: "", phone: "" };
   }
 }
 
 export function writePerson(person: Person) {
-  sessionStorage.setItem(PERSON_KEY, JSON.stringify(person));
+  const current = readPerson();
+  sessionStorage.setItem(PERSON_KEY, JSON.stringify({
+    name: person.name,
+    address: person.address,
+    pin: person.pin,
+    phone: person.phone ?? current.phone ?? "",
+  }));
   window.dispatchEvent(new Event("aurabowls-person"));
 }
 

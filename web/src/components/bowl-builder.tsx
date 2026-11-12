@@ -43,10 +43,11 @@ const start: CustomBowl = { diet: "veg", base: "", protein: "", portions: 1, veg
 export function BowlBuilder({ whatsapp }: { whatsapp: string }) {
   const [bowl, setBowl] = useState<CustomBowl>(start);
   const [step, setStep] = useState(0);
-  const [person, setPerson] = useState({ name: "", address: "", pin: "" });
+  const [person, setPerson] = useState({ name: "", address: "", pin: "", phone: "" });
   const [notice, setNotice] = useState("");
   const [orderId] = useState(() => newOrderId());
   const nameRef = useRef<HTMLInputElement>(null);
+  const phoneRef = useRef<HTMLInputElement>(null);
   const addressRef = useRef<HTMLTextAreaElement>(null);
   const pinRef = useRef<HTMLInputElement>(null);
   const priced = priceCustomBowl(bowl);
@@ -61,7 +62,12 @@ export function BowlBuilder({ whatsapp }: { whatsapp: string }) {
 
   useEffect(() => {
     const next = readPerson();
-    setPerson(isServedArea(next.pin) ? { ...next, pin: SERVED_PIN } : next);
+    setPerson({
+      name: next.name,
+      address: next.address,
+      pin: isServedArea(next.pin) ? SERVED_PIN : next.pin,
+      phone: (next.phone || "").replace(/\D/g, "").slice(0, 10),
+    });
   }, []);
 
   useEffect(() => {
@@ -113,6 +119,7 @@ export function BowlBuilder({ whatsapp }: { whatsapp: string }) {
     }
     const fields = [
       [person.name.trim(), nameRef, "Add your name."],
+      [person.phone.replace(/\D/g, "").length === 10 ? "ok" : "", phoneRef, "Add your 10-digit mobile so you can track this order."],
       [person.address.trim(), addressRef, "Add your delivery address."],
       [pinChecked ? "ok" : "", pinRef, "Say if this address is within 7 km of Madhapur."],
     ] as const;
@@ -125,15 +132,18 @@ export function BowlBuilder({ whatsapp }: { whatsapp: string }) {
     }
     writePerson(person);
     const proteinName = priced.protein?.name || "custom bowl";
+    const startDate = kitchenPickDate().date;
     queueSingleOrder({
       name: person.name,
+      phone: person.phone.replace(/\D/g, "").slice(0, 10),
       address: person.address,
       items: [{ name: `Custom ${proteinName} bowl`, quantity: priced.quantity, pricePaise: priced.bowlPaise, mealType: bowl.diet }],
       note: outside ? "Outside 7 km — reply first" : "",
       orderId,
-      startDate: kitchenPickDate().date,
+      startDate,
+      slot: "12:00–1:30",
     });
-    const text = outside ? outsideAreaText(person) : customBowlText({ ...person, bowl });
+    const text = outside ? outsideAreaText(person) : customBowlText({ ...person, bowl, orderId, date: startDate, slot: "12:00–1:30" });
     const href = whatsappHref(whatsapp, text);
     if (href) window.open(href, "_blank", "noopener");
   };
@@ -246,7 +256,11 @@ export function BowlBuilder({ whatsapp }: { whatsapp: string }) {
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="block text-sm font-semibold text-[#1A4A16]">
                   Name
-                  <input ref={nameRef} className="field mt-1.5" value={person.name} autoComplete="name" onChange={(event) => setPerson({ ...person, name: event.target.value })} />
+                  <input ref={nameRef} className="field mt-1.5 min-h-12" value={person.name} autoComplete="name" onChange={(event) => setPerson({ ...person, name: event.target.value })} />
+                </label>
+                <label className="block text-sm font-semibold text-[#1A4A16]">
+                  Mobile
+                  <input ref={phoneRef} className="field mt-1.5 min-h-12" type="tel" inputMode="numeric" autoComplete="tel" maxLength={10} value={person.phone} placeholder="10-digit mobile" onChange={(event) => setPerson({ ...person, phone: event.target.value.replace(/\D/g, "").slice(0, 10) })} />
                 </label>
                 <div className="block text-sm font-semibold text-[#1A4A16]">
                   Delivery area

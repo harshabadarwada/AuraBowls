@@ -1,6 +1,12 @@
-export function normalizeIndianMobile(input: string): string | null {
+export function localDigits(input: string) {
   const digits = input.replace(/\D/g, "");
-  const local = digits.length === 12 && digits.startsWith("91") ? digits.slice(2) : digits.length === 11 && digits.startsWith("0") ? digits.slice(1) : digits;
+  if (digits.length === 12 && digits.startsWith("91")) return digits.slice(2);
+  if (digits.length === 11 && digits.startsWith("0")) return digits.slice(1);
+  return digits.slice(-10);
+}
+
+export function normalizeIndianMobile(input: string): string | null {
+  const local = localDigits(input);
   if (!/^[6-9]\d{9}$/.test(local)) return null;
   return `+91${local}`;
 }
